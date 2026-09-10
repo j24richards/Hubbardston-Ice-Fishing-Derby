@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hubbardston Ice Fishing Derby</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Libre+Franklin:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+  :root{
+    --frost-100:#EEF5F9;
+    --frost-200:#DCEAF1;
+    --frost-300:#C3DBE6;
+    --ice-950:#0B2635;
+    --ice-800:#163B4F;
+    --ice-700:#1F4A61;
+    --amber-500:#E07A1E;
+    --amber-600:#C4650F;
+    --slate-600:#48657A;
+    --snow:#FFFFFF;
+
+    --bg:var(--frost-100);
+    --bg-card:var(--snow);
+    --bg-sunken:var(--frost-200);
+    --text:var(--ice-950);
+    --text-muted:var(--slate-600);
+    --border:var(--frost-300);
+    --accent:var(--amber-500);
+    --accent-text:#3A2205;
+    --accent-contrast:var(--snow);
+    --hero-bg:var(--ice-950);
+    --hero-text:var(--frost-100);
+    --hero-muted:#9FC3D6;
+    --shadow:0 1px 2px rgba(11,38,53,.06),0 8px 24px rgba(11,38,53,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0A1D28;
+      --bg-card:#122E3D;
+      --bg-sunken:#0E2530;
+      --text:#EAF3F8;
+      --text-muted:#8FB2C6;
+      --border:#204053;
+      --accent:#F09A42;
+      --accent-text:#2A1600;
+      --accent-contrast:#0A1D28;
+      --hero-bg:#071620;
+      --hero-text:#EAF3F8;
+      --hero-muted:#7CA3B9;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0A1D28;
+    --bg-card:#122E3D;
+    --bg-sunken:#0E2530;
+    --text:#EAF3F8;
+    --text-muted:#8FB2C6;
+    --border:#204053;
+    --accent:#F09A42;
+    --accent-text:#2A1600;
+    --accent-contrast:#0A1D28;
+    --hero-bg:#071620;
+    --hero-text:#EAF3F8;
+    --hero-muted:#7CA3B9;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Libre Franklin',system-ui,-apple-system,sans-serif;
+    padding-inline:20px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.001ms !important; transition-duration:.001ms !important;}
+  }
+
+  .wrap{max-width:920px;margin:0 auto;}
+  .display{
+    font-family:'Bebas Neue',system-ui,sans-serif;
+    letter-spacing:.02em;
+    text-wrap:balance;
+    line-height:.95;
+  }
+  .mono{font-family:'JetBrains Mono',ui-monospace,monospace; font-variant-numeric:tabular-nums;}
+  .eyebrow{
+    font-family:'Libre Franklin',sans-serif;
+    font-weight:700;
+    font-size:.72rem;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--hero-muted);
+  }
+
+  a{color:inherit;}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    background:var(--hero-bg);
+    color:var(--hero-text);
+    margin-inline:-20px;
+    padding:52px 20px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .hero-inner{max-width:920px;margin:0 auto;}
+  .hero-top{
+    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    margin-bottom:28px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:.95rem;}
+  .brand-mark{width:22px;height:22px;flex:none;}
+  .hero-title{
+    font-size:clamp(2.6rem, 8vw, 5.4rem);
+    margin:6px 0 14px;
+  }
+  .hero-title .accent-word{color:var(--accent);}
+  .hero-sub{
+    font-size:clamp(1.05rem,2.4vw,1.3rem);
+    color:var(--hero-muted);
+    max-width:38ch;
+    margin:0 0 32px;
+  }
+
+  .scoreboard{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    border:1px solid var(--border);
+    border-radius:10px;
+    overflow:hidden;
+    background:rgba(255,255,255,.02);
+  }
+  .sb-cell{
+    padding:16px 14px;
+    border-left:1px solid var(--border);
+  }
+  .sb-cell:first-child{border-left:none;}
+  .sb-label{
+    font-size:.66rem; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--hero-muted); font-weight:700; margin-bottom:6px;
+  }
+  .sb-value{font-size:1.05rem; font-weight:700;}
+  .sb-value small{display:block;font-size:.78rem;font-weight:500;color:var(--hero-muted);margin-top:2px;}
+
+  @media (max-width:640px){
+    .scoreboard{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .sb-cell:nth-child(3){border-left:none;}
+    .sb-cell:nth-child(3),.sb-cell:nth-child(4){border-top:1px solid var(--border);}
+  }
+
+  .hero-cta{
+    display:flex; gap:12px; flex-wrap:wrap; align-items:center;
+    padding:26px 0 30px;
+  }
+  .btn{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'Libre Franklin',sans-serif; font-weight:700; font-size:.95rem;
+    padding:13px 22px; border-radius:8px; text-decoration:none;
+    border:1px solid transparent; cursor:pointer;
+  }
+  .btn-primary{background:var(--accent); color:var(--accent-text);}
+  .btn-ghost{background:transparent; color:var(--hero-text); border-color:var(--border);}
+  .hero-note{font-size:.85rem;color:var(--hero-muted);max-width:46ch;margin:0 0 44px;}
+
+  /* ---------- ICE DIVIDER ---------- */
+  .ice-divider{height:14px;margin-inline:-20px;position:relative;overflow:hidden;background:var(--hero-bg);}
+  .ice-divider svg{display:block;width:100%;height:100%;}
+
+  /* ---------- SECTIONS ---------- */
+  section.block{padding:56px 0;border-bottom:1px solid var(--border);}
+  section.block:last-of-type{border-bottom:none;}
+  .block-head{margin-bottom:28px;}
+  .block-kicker{
+    font-weight:700;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--accent);margin-bottom:8px;
+  }
+  h2.block-title{font-size:clamp(1.8rem,4vw,2.4rem);margin:0 0 10px;}
+  .block-desc{color:var(--text-muted);max-width:60ch;margin:0;font-size:1rem;line-height:1.55;}
+
+  /* Category badges */
+  .cat-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;
+  }
+  .cat-card{
+    background:var(--bg-card);border:1px solid var(--border);border-radius:12px;
+    padding:18px;box-shadow:var(--shadow);
+  }
+  .cat-card .fish{width:34px;height:20px;color:var(--accent);margin-bottom:10px;}
+  .cat-card h3{font-size:1.02rem;margin:0 0 4px;}
+  .cat-card p{margin:0;font-size:.85rem;color:var(--text-muted);}
+
+  /* Rules list */
+  .rules-list{list-style:none;margin:24px 0 0;padding:0;display:flex;flex-direction:column;gap:14px;}
+  .rules-list li{
+    display:flex;gap:14px;align-items:baseline;
+    padding-bottom:14px;border-bottom:1px dashed var(--border);
+    font-size:.98rem;line-height:1.5;
+  }
+  .rules-list li:last-child{border-bottom:none;padding-bottom:0;}
+  .rule-num{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:700;flex:none;width:2.2ch;}
+
+  /* Timeline */
+  .timeline{display:flex;flex-direction:column;}
+  .tl-row{
+    display:grid;grid-template-columns:110px 1fr;gap:18px;
+    padding:14px 0;border-bottom:1px solid var(--border);
+  }
+  .tl-row:last-child{border-bottom:none;}
+  .tl-time{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--accent);font-size:.95rem;}
+  .tl-label{font-weight:600;}
+  .tl-sub{color:var(--text-muted);font-size:.88rem;margin-top:2px;}
+
+  .logistics-grid{
+    margin-top:26px;display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;
+  }
+  .logi-card{background:var(--bg-sunken);border-radius:12px;padding:16px 18px;}
+  .logi-card h4{margin:0 0 6px;font-size:.9rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);}
+  .logi-card p{margin:0;font-size:.95rem;line-height:1.5;}
+
+  /* Prizes */
+  .prize-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:36px;}
+  .prize-card{
+    background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:var(--shadow);
+  }
+  .prize-card .rank{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:700;font-size:.85rem;}
+  .prize-card h3{margin:6px 0 6px;font-size:1.1rem;}
+  .prize-card p{margin:0;color:var(--text-muted);font-size:.9rem;}
+
+  .sponsor-tiers{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin:22px 0 28px;
+  }
+  .tier-card{border:1px solid var(--border);border-radius:12px;padding:18px;background:var(--bg-sunken);}
+  .tier-card .tier-price{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--accent);font-size:1.3rem;}
+  .tier-card h4{margin:8px 0 4px;font-size:1rem;}
+  .tier-card p{margin:0;font-size:.85rem;color:var(--text-muted);}
+
+  .sponsor-open{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:22px;
+  }
+  .sponsor-slot{
+    border:1px dashed var(--border);border-radius:10px;height:74px;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--text-muted);font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;font-weight:600;
+  }
+
+  /* FAQ */
+  .faq{display:flex;flex-direction:column;gap:22px;}
+  .faq-item h3{font-size:1.02rem;margin:0 0 6px;}
+  .faq-item p{margin:0;color:var(--text-muted);font-size:.95rem;line-height:1.55;max-width:65ch;}
+
+  /* Footer */
+  footer{
+    padding:40px 0 60px;
+    display:flex;flex-direction:column;gap:18px;
+  }
+  .footer-row{
+    display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-start;
+  }
+  .footer-cta h3{margin:0 0 6px;font-size:1.3rem;}
+  .footer-cta p{margin:0;color:var(--text-muted);max-width:42ch;font-size:.92rem;}
+  .footer-fine{color:var(--text-muted);font-size:.78rem;line-height:1.6;border-top:1px solid var(--border);padding-top:16px;}
+
+  ::selection{background:var(--accent);color:var(--accent-text);}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-top">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" stroke="currentColor" stroke-width="1.4"/><path d="M4 13c2-3 5-3 7 0s5 3 7 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <span>Hubbardston Ice Fishing Derby</span>
+      </div>
+      <span class="eyebrow">Winter Event &middot; Comet Pond</span>
+    </div>
+
+    <p class="eyebrow" style="margin-bottom:6px;">Annual &middot; All Ages Welcome</p>
+    <h1 class="display hero-title">One Lake.<br>One Day.<br><span class="accent-word">Biggest Fish Wins.</span></h1>
+    <p class="hero-sub">Drop a line with your neighbors on Comet Pond for a morning of tip-ups, thermoses, and bragging rights that last all winter.</p>
+
+    <div class="scoreboard mono">
+      <div class="sb-cell">
+        <div class="sb-label" style="font-family:'Libre Franklin',sans-serif;">Date</div>
+        <div class="sb-value">Jan 23<small>Saturday, 2027</small></div>
+      </div>
+      <div class="sb-cell">
+        <div class="sb-label" style="font-family:'Libre Franklin',sans-serif;">Lines In</div>
+        <div class="sb-value">7:00 AM<small>Check-in from 5:30</small></div>
+      </div>
+      <div class="sb-cell">
+        <div class="sb-label" style="font-family:'Libre Franklin',sans-serif;">Location</div>
+        <div class="sb-value">Comet Pond<small>Hubbardston, MA</small></div>
+      </div>
+      <div class="sb-cell">
+        <div class="sb-label" style="font-family:'Libre Franklin',sans-serif;">Entry</div>
+        <div class="sb-value">$20<small>Kids 12&darr; free</small></div>
+      </div>
+    </div>
+
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="mailto:info@hubbardstonderby.example?subject=Notify%20me%20-%20Ice%20Fishing%20Derby">Get Notified When Registration Opens</a>
+      <a class="btn btn-ghost" href="#rules">See Rules &amp; Categories</a>
+    </div>
+    <p class="hero-note">Online sign-up isn't live yet — this page will get a real registration form closer to derby day. Email us in the meantime and we'll add you to the list.</p>
+  </div>
+
+  <div class="ice-divider">
+    <svg viewBox="0 0 400 14" preserveAspectRatio="none"><path d="M0 7 L20 3 L45 10 L70 5 L95 9 L120 2 L150 8 L175 4 L205 10 L230 6 L260 9 L290 3 L320 7 L350 4 L400 8" fill="none" stroke="var(--frost-300)" stroke-width="1"/></svg>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <section class="block" id="rules">
+    <div class="block-head">
+      <div class="block-kicker">The Basics</div>
+      <h2 class="block-title">Categories &amp; Rules</h2>
+      <p class="block-desc">Five categories, one weigh-in station, and a set of rules short enough to read before your coffee's cold.</p>
+    </div>
+
+    <div class="cat-grid">
+      <div class="cat-card">
+        <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
+        <h3>Yellow Perch</h3>
+        <p>Top 3 by weight</p>
+      </div>
+      <div class="cat-card">
+        <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
+        <h3>Chain Pickerel</h3>
+        <p>Top 3 by weight</p>
+      </div>
+      <div class="cat-card">
+        <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
+        <h3>Largemouth Bass</h3>
+        <p>Top 3 by weight</p>
+      </div>
+      <div class="cat-card">
+        <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
+        <h3>Rainbow Trout</h3>
+        <p>Top 3 by weight</p>
+      </div>
+      <div class="cat-card">
+        <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
+        <h3>Youth (12 &amp; under)</h3>
+        <p>Any species, top 3 by weight</p>
+      </div>
+    </div>
+
+    <ol class="rules-list">
+      <li><span class="rule-num">01</span><span>Anglers 16 and up need a valid Massachusetts freshwater fishing license — bring it with you to check-in.</span></li>
+      <li><span class="rule-num">02</span><span>Each angler may fish up to five lines total, in any combination of jigging rods and tip-ups, per state regulations.</span></li>
+      <li><span class="rule-num">03</span><span>Fish must be caught on Comet Pond, during derby hours, to qualify — no fish from other waters or other days.</span></li>
+      <li><span class="rule-num">04</span><span>All entries are weighed at the official scale near the warming hut. No outside scales or self-reported weights.</span></li>
+      <li><span class="rule-num">05</span><span>Ties go to whichever fish was weighed in first. Committee rulings on eligibility are final.</span></li>
+      <li><span class="rule-num">06</span><span>Ice conditions are each angler's own responsibility. We recommend a minimum of 4" of solid, clear ice before heading out, and spud bars/cleats are strongly encouraged.</span></li>
+      <li><span class="rule-num">07</span><span>If the ice isn't safe on derby morning, we'll move to the posted rain/thaw date rather than cancel outright.</span></li>
+    </ol>
+  </section>
+
+  <section class="block">
+    <div class="block-head">
+      <div class="block-kicker">Plan Your Morning</div>
+      <h2 class="block-title">Schedule &amp; Logistics</h2>
+      <p class="block-desc">Everything runs off the ice at Comet Pond's public landing — plenty of parking, a warming hut, and hot cocoa on the house.</p>
+    </div>
+
+    <div class="timeline">
+      <div class="tl-row">
+        <div class="tl-time mono">5:30 AM</div>
+        <div><div class="tl-label">Check-in &amp; bib pickup</div><div class="tl-sub">Pay entry, get your angler number, drop off tip-up tags</div></div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-time mono">6:45 AM</div>
+        <div><div class="tl-label">Safety briefing</div><div class="tl-sub">Ice conditions, boundaries, and where the warming hut is</div></div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-time mono">7:00 AM</div>
+        <div><div class="tl-label">Lines in — derby begins</div><div class="tl-sub">Fish anywhere within the marked derby area</div></div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-time mono">12:00 PM</div>
+        <div><div class="tl-label">Chili &amp; cocoa</div><div class="tl-sub">Warming hut, free for all registered anglers</div></div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-time mono">2:00 PM</div>
+        <div><div class="tl-label">Lines out — final weigh-ins</div><div class="tl-sub">Scale closes sharp at 2:00, no exceptions</div></div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-time mono">2:30 PM</div>
+        <div><div class="tl-label">Awards ceremony</div><div class="tl-sub">Prizes by category, plus the Mystery Weight jackpot draw</div></div>
+      </div>
+    </div>
+
+    <div class="logistics-grid">
+      <div class="logi-card"><h4>Parking</h4><p>Public landing off Williamsville Rd. Overflow parking is marshaled after 6 AM — follow the signs.</p></div>
+      <div class="logi-card"><h4>Bring</h4><p>Auger, skimmer, bucket or sled, ice cleats, and warm layers. A few loaner augers on hand for kids' entries.</p></div>
+      <div class="logi-card"><h4>Restrooms</h4><p>Portable facilities near the warming hut, open from check-in through awards.</p></div>
+      <div class="logi-card"><h4>Weather policy</h4><p>Unsafe ice moves the derby to the posted rain/thaw date — check this page or our email list that morning.</p></div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="block-head">
+      <div class="block-kicker">What You Could Win</div>
+      <h2 class="block-title">Prizes &amp; Sponsors</h2>
+      <p class="block-desc">Prizes for every category, plus one lucky guess on the Mystery Weight board. Proceeds after costs go toward pond stocking and youth fishing gear.</p>
+    </div>
+
+    <div class="prize-grid">
+      <div class="prize-card">
+        <div class="rank">1ST · 2ND · 3RD</div>
+        <h3>Per Category</h3>
+        <p>Cash and gift-card prizes for the top three weights in each of the five categories.</p>
+      </div>
+      <div class="prize-card">
+        <div class="rank">JACKPOT</div>
+        <h3>Mystery Weight</h3>
+        <p>Guess the weight of a pre-tagged fish at check-in. Closest guess at weigh-out takes the jackpot.</p>
+      </div>
+      <div class="prize-card">
+        <div class="rank">YOUTH</div>
+        <h3>Rod &amp; Reel Combo</h3>
+        <p>Every youth entrant is eligible, regardless of species or weight — first tackle box included.</p>
+      </div>
+    </div>
+
+    <div class="block-kicker" style="margin-top:8px;">Sponsor Tiers</div>
+    <div class="sponsor-tiers">
+      <div class="tier-card"><div class="tier-price mono">$50</div><h4>Bait Bucket</h4><p>Name on the derby email and thank-you sign at the warming hut.</p></div>
+      <div class="tier-card"><div class="tier-price mono">$150</div><h4>Tip-Up</h4><p>Everything above, plus your logo on this page's sponsor wall.</p></div>
+      <div class="tier-card"><div class="tier-price mono">$300</div><h4>Auger</h4><p>Everything above, plus a banner at the landing and a shout-out at awards.</p></div>
+    </div>
+
+    <div class="block-kicker">Thank You To Our Sponsors</div>
+    <div class="sponsor-open">
+      <div class="sponsor-slot">Open Slot</div>
+      <div class="sponsor-slot">Open Slot</div>
+      <div class="sponsor-slot">Open Slot</div>
+      <div class="sponsor-slot">Open Slot</div>
+    </div>
+    <a class="btn btn-ghost" style="border-color:var(--border);" href="mailto:info@hubbardstonderby.example?subject=Derby%20Sponsorship">Become a Sponsor</a>
+  </section>
+
+  <section class="block">
+    <div class="block-head">
+      <div class="block-kicker">Good To Know</div>
+      <h2 class="block-title">FAQ</h2>
+    </div>
+    <div class="faq">
+      <div class="faq-item">
+        <h3>Do I need a fishing license?</h3>
+        <p>Yes — anyone 16 or older needs a current Massachusetts freshwater fishing license. Bring a copy (paper or digital) to check-in.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What happens if the ice isn't safe?</h3>
+        <p>We check the ice in the days before the derby. If conditions aren't safe on the day, we move the event to our posted rain/thaw date rather than fish on bad ice.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Can I fish from a shanty or shelter?</h3>
+        <p>Yes, portable shanties are welcome within the marked derby boundary. Please keep walkways clear for the safety sweep.</p>
+      </div>
+      <div class="faq-item">
+        <h3>I didn't catch anything — was it still worth it?</h3>
+        <p>Plenty of anglers go home empty-handed and still make it back next year for the chili. Entry includes the Mystery Weight jackpot draw either way.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Where does my entry fee go?</h3>
+        <p>After prizes and event costs, proceeds support pond stocking and youth fishing programs in Hubbardston.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-row">
+      <div class="footer-cta">
+        <h3 class="display" style="font-size:1.6rem;">See You On The Ice</h3>
+        <p>Questions about entries, sponsorship, or the rain date? Reach the derby committee directly.</p>
+      </div>
+      <a class="btn btn-primary" href="mailto:info@hubbardstonderby.example">Email the Committee</a>
+    </div>
+    <div class="footer-fine" id="footer-fine">
+      Hubbardston Ice Fishing Derby Committee · Comet Pond, Hubbardston, MA · Details on this page are subject to change as we lock in the season's date and permits.
+    </div>
+  </footer>
+</div>
+
+<script>
+  (function(){
+    var el = document.getElementById('footer-fine');
+    if(el){ el.textContent += ' · © ' + new Date().getFullYear(); }
+  })();
+</script>
+</body>
+</html>
