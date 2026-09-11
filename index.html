@@ -325,6 +325,21 @@
   .sponsor-slot--filled:hover{border-color:var(--accent2);background:var(--bg-card);color:inherit;}
   .sponsor-slot--filled .sponsor-name{font-size:.95rem;font-weight:700;color:var(--text);text-transform:none;}
 
+  /* Raffle prize photos */
+  .prize-photo-grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin:12px 0 28px;
+  }
+  .prize-photo-card{
+    position:relative;border:1px solid var(--border);border-radius:10px;overflow:hidden;
+    background:var(--bg-card);box-shadow:var(--shadow);
+  }
+  .prize-photo-card img{display:block;width:100%;height:140px;object-fit:cover;}
+  .prize-photo-name{padding:8px 10px;font-size:.82rem;font-weight:600;color:var(--text);}
+  .prize-photo-del{
+    position:absolute;top:6px;right:6px;background:rgba(10,20,25,.62);color:#fff;
+    border:none;border-radius:50%;width:22px;height:22px;line-height:1;cursor:pointer;font-size:.75rem;
+  }
+
   /* Volunteers */
   .volunteer-grid{
     display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:18px;
@@ -399,6 +414,7 @@
   .staff-error{color:#d64a4a;font-size:.82rem;}
   .admin-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;}
   .staff-signout{background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:8px;padding:7px 14px;font-size:.82rem;cursor:pointer;font-family:'Libre Franklin',sans-serif;}
+  .upload-status{color:var(--text-muted);font-size:.82rem;margin:-2px 0 10px;}
 
   ::selection{background:var(--accent);color:var(--accent-text);}
 </style>
@@ -622,6 +638,22 @@
     </div>
   </section>
 
+  <section class="block" id="raffle-prizes">
+    <div class="block-head">
+      <div class="block-kicker">Win Something</div>
+      <h2 class="block-title">Raffle Prizes</h2>
+      <p class="block-desc">Two separate raffles on derby day: buy tickets for a shot at the prizes below, or enter the kids' raffle — most of that gear is donated by the community just for our young anglers.</p>
+    </div>
+
+    <div class="block-kicker" style="margin-top:8px;">Ticket Raffle</div>
+    <div id="ticketPrizesEmpty" class="lb-empty">Prizes will be added here as they're donated — check back soon!</div>
+    <div id="ticketPrizesGrid" class="prize-photo-grid"></div>
+
+    <div class="block-kicker" style="margin-top:8px;">Kids' Raffle</div>
+    <div id="kidsPrizesEmpty" class="lb-empty">Prizes will be added here as they're donated — check back soon!</div>
+    <div id="kidsPrizesGrid" class="prize-photo-grid"></div>
+  </section>
+
   <section class="block">
     <div class="block-head">
       <div class="block-kicker">It Takes A Village</div>
@@ -708,6 +740,18 @@
       <div class="admin-row">
         <input type="number" step="1" id="raffleInput" placeholder="50/50 total ($)" style="width:11em;">
         <button id="updateRaffleBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Update Total</button>
+      </div>
+      <div class="admin-row">
+        <select id="prizeRaffle">
+          <option value="ticket">Ticket Raffle</option>
+          <option value="kids">Kids' Raffle</option>
+        </select>
+        <input type="text" id="prizeName" placeholder="Prize name (optional)">
+        <input type="file" id="prizeFiles" accept="image/*" multiple>
+        <button id="uploadPrizeBtn" class="btn btn-primary btn-sm" type="button">Upload Prize Photo</button>
+      </div>
+      <div id="prizeUploadStatus" class="upload-status"></div>
+      <div class="admin-row">
         <button id="staffSignOut" class="staff-signout" type="button">Sign out</button>
       </div>
     </div>
@@ -763,6 +807,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script>
 (function(){
   var firebaseConfig = {
@@ -776,7 +821,10 @@
   firebase.initializeApp(firebaseConfig);
   var auth = firebase.auth();
   var db = firebase.firestore();
+  var storage = firebase.storage();
   var STAFF_EMAIL = "staff@hubbardstonderby.local";
+  var MAX_DIM = 1920;
+  var JPEG_QUALITY = 0.85;
   var CATEGORY_ORDER = ["Pickerel","Bass","Perch","Youth Pickerel","Youth Bass","Youth Perch"];
 
   var raffleAmountEl = document.getElementById('raffleAmount');
@@ -787,6 +835,15 @@
   var staffAdminBox = document.getElementById('staffAdminBox');
   var staffPassword = document.getElementById('staffPassword');
   var staffError = document.getElementById('staffError');
+  var ticketPrizesEmptyEl = document.getElementById('ticketPrizesEmpty');
+  var ticketPrizesGridEl = document.getElementById('ticketPrizesGrid');
+  var kidsPrizesEmptyEl = document.getElementById('kidsPrizesEmpty');
+  var kidsPrizesGridEl = document.getElementById('kidsPrizesGrid');
+  var prizeRaffleEl = document.getElementById('prizeRaffle');
+  var prizeNameEl = document.getElementById('prizeName');
+  var prizeFilesEl = document.getElementById('prizeFiles');
+  var uploadPrizeBtn = document.getElementById('uploadPrizeBtn');
+  var prizeUploadStatusEl = document.getElementById('prizeUploadStatus');
 
   staffToggle.addEventListener('click', function(){
     if (auth.currentUser) return;
@@ -814,6 +871,8 @@
       staffPassword.value = '';
     }
     renderLeaderboard(latestEntries);
+    renderPrizes('ticket', latestTicketPrizes);
+    renderPrizes('kids', latestKidsPrizes);
   });
 
   document.getElementById('addEntryBtn').addEventListener('click', function(){
@@ -886,6 +945,108 @@
     var total = (doc.exists && typeof doc.data().total === 'number') ? doc.data().total : 0;
     raffleAmountEl.textContent = '$' + total.toLocaleString();
   }, function(err){ console.error('raffle listen error', err); });
+
+  function resizeImage(file){
+    return new Promise(function(resolve, reject){
+      var img = new Image();
+      var url = URL.createObjectURL(file);
+      img.onload = function(){
+        URL.revokeObjectURL(url);
+        var w = img.width, h = img.height;
+        var scale = Math.min(1, MAX_DIM / Math.max(w, h));
+        var cw = Math.round(w * scale), ch = Math.round(h * scale);
+        var canvas = document.createElement('canvas');
+        canvas.width = cw; canvas.height = ch;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, cw, ch);
+        canvas.toBlob(function(blob){
+          if (blob) resolve(blob); else reject(new Error('toBlob failed'));
+        }, 'image/jpeg', JPEG_QUALITY);
+      };
+      img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error('image load failed')); };
+      img.src = url;
+    });
+  }
+
+  uploadPrizeBtn.addEventListener('click', function(){
+    var files = Array.prototype.slice.call(prizeFilesEl.files || []);
+    if (!files.length) { prizeUploadStatusEl.textContent = 'Choose one or more photos first.'; return; }
+    var raffle = prizeRaffleEl.value;
+    var name = prizeNameEl.value.trim();
+    uploadPrizeBtn.disabled = true;
+    var done = 0, total = files.length, failed = 0;
+    prizeUploadStatusEl.textContent = 'Uploading 0 of ' + total + '...';
+
+    files.reduce(function(chain, file){
+      return chain.then(function(){
+        return resizeImage(file).then(function(blob){
+          var path = 'prizes/' + Date.now() + '_' + Math.random().toString(36).slice(2) + '.jpg';
+          var ref = storage.ref().child(path);
+          return ref.put(blob, { contentType: 'image/jpeg' }).then(function(){
+            return ref.getDownloadURL();
+          }).then(function(url){
+            return db.collection('prizes').add({
+              url: url, path: path, raffle: raffle, name: name,
+              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          });
+        }).catch(function(err){
+          console.error('prize upload failed for', file.name, err);
+          failed++;
+        }).then(function(){
+          done++;
+          prizeUploadStatusEl.textContent = 'Uploading ' + done + ' of ' + total + (failed ? (' (' + failed + ' failed)') : '') + '...';
+        });
+      });
+    }, Promise.resolve()).then(function(){
+      prizeUploadStatusEl.textContent = failed ? (failed + ' of ' + total + ' photo(s) failed to upload.') : 'Done — ' + total + ' photo(s) uploaded.';
+      prizeFilesEl.value = '';
+      prizeNameEl.value = '';
+      uploadPrizeBtn.disabled = false;
+    });
+  });
+
+  var latestTicketPrizes = [];
+  var latestKidsPrizes = [];
+
+  function renderPrizes(raffleKey, prizes){
+    if (raffleKey === 'ticket') { latestTicketPrizes = prizes; } else { latestKidsPrizes = prizes; }
+    var emptyEl = raffleKey === 'ticket' ? ticketPrizesEmptyEl : kidsPrizesEmptyEl;
+    var gridEl = raffleKey === 'ticket' ? ticketPrizesGridEl : kidsPrizesGridEl;
+    if (!prizes.length) {
+      emptyEl.hidden = false;
+      gridEl.innerHTML = '';
+      return;
+    }
+    emptyEl.hidden = true;
+    var isStaff = !!auth.currentUser;
+    gridEl.innerHTML = prizes.map(function(p){
+      return '<div class="prize-photo-card">' +
+        '<img src="' + p.url + '" loading="lazy" alt="' + (p.name ? escapeHtml(p.name) : 'Raffle prize') + '">' +
+        (p.name ? '<div class="prize-photo-name">' + escapeHtml(p.name) + '</div>' : '') +
+        (isStaff ? '<button class="prize-photo-del" data-id="' + p.id + '" data-path="' + (p.path || '') + '" title="Remove">✕</button>' : '') +
+        '</div>';
+    }).join('');
+    if (isStaff) {
+      Array.prototype.forEach.call(gridEl.querySelectorAll('.prize-photo-del'), function(btn){
+        btn.addEventListener('click', function(){
+          var id = btn.dataset.id, path = btn.dataset.path;
+          db.collection('prizes').doc(id).delete();
+          if (path) storage.ref().child(path).delete().catch(function(err){ console.error('storage delete failed', err); });
+        });
+      });
+    }
+  }
+
+  db.collection('prizes').orderBy('createdAt', 'desc').onSnapshot(function(snap){
+    var ticket = [], kids = [];
+    snap.forEach(function(doc){
+      var p = Object.assign({id:doc.id}, doc.data());
+      if (p.raffle === 'kids') { kids.push(p); } else { ticket.push(p); }
+    });
+    renderPrizes('ticket', ticket);
+    renderPrizes('kids', kids);
+  }, function(err){ console.error('prizes listen error', err); });
 })();
 </script>
 </body>
