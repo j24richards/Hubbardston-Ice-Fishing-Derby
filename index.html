@@ -382,11 +382,12 @@
       <div id="staffAdminBox" class="staff-box" hidden style="flex-direction:column;align-items:stretch;">
         <div class="admin-row">
           <select id="entryCategory">
-            <option>Yellow Perch</option>
-            <option>Chain Pickerel</option>
-            <option>Largemouth Bass</option>
-            <option>Rainbow Trout</option>
-            <option>Youth</option>
+            <option>Pickerel</option>
+            <option>Bass</option>
+            <option>Perch</option>
+            <option>Youth Pickerel</option>
+            <option>Youth Bass</option>
+            <option>Youth Perch</option>
           </select>
           <input type="text" id="entryAngler" placeholder="Angler name">
           <input type="number" step="0.01" id="entryWeight" placeholder="Weight (lb)" style="width:9em;">
@@ -405,34 +406,39 @@
     <div class="block-head">
       <div class="block-kicker">The Basics</div>
       <h2 class="block-title">Categories &amp; Rules</h2>
-      <p class="block-desc">Five categories, one weigh-in station, and a set of rules short enough to read before your coffee's cold.</p>
+      <p class="block-desc">Six categories, one weigh-in station, and a set of rules short enough to read before your coffee's cold.</p>
     </div>
 
     <div class="cat-grid">
       <div class="cat-card">
         <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
-        <h3>Yellow Perch</h3>
+        <h3>Pickerel</h3>
         <p>Top 3 by weight</p>
       </div>
       <div class="cat-card">
         <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
-        <h3>Chain Pickerel</h3>
+        <h3>Bass</h3>
         <p>Top 3 by weight</p>
       </div>
       <div class="cat-card">
         <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
-        <h3>Largemouth Bass</h3>
+        <h3>Perch</h3>
         <p>Top 3 by weight</p>
       </div>
       <div class="cat-card">
         <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
-        <h3>Rainbow Trout</h3>
-        <p>Top 3 by weight</p>
+        <h3>Youth Pickerel</h3>
+        <p>12 &amp; under, top 3 by weight</p>
       </div>
       <div class="cat-card">
         <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
-        <h3>Youth (12 &amp; under)</h3>
-        <p>Any species, top 3 by weight</p>
+        <h3>Youth Bass</h3>
+        <p>12 &amp; under, top 3 by weight</p>
+      </div>
+      <div class="cat-card">
+        <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
+        <h3>Youth Perch</h3>
+        <p>12 &amp; under, top 3 by weight</p>
       </div>
     </div>
 
@@ -500,7 +506,7 @@
       <div class="prize-card">
         <div class="rank">1ST · 2ND · 3RD</div>
         <h3>Per Category</h3>
-        <p>Cash and gift-card prizes for the top three weights in each of the five categories.</p>
+        <p>Cash and gift-card prizes for the top three weights in each of the six categories.</p>
       </div>
       <div class="prize-card">
         <div class="rank">JACKPOT</div>
@@ -601,7 +607,7 @@
   var auth = firebase.auth();
   var db = firebase.firestore();
   var STAFF_EMAIL = "staff@hubbardstonderby.local";
-  var CATEGORY_ORDER = ["Yellow Perch","Chain Pickerel","Largemouth Bass","Rainbow Trout","Youth"];
+  var CATEGORY_ORDER = ["Pickerel","Bass","Perch","Youth Pickerel","Youth Bass","Youth Perch"];
 
   var raffleAmountEl = document.getElementById('raffleAmount');
   var lbEmptyEl = document.getElementById('leaderboardEmpty');
