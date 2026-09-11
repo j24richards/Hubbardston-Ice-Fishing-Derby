@@ -270,6 +270,40 @@
   .footer-flag{height:68px;width:auto;flex:none;filter:drop-shadow(0 3px 8px rgba(0,0,0,.28));}
   .footer-fine{color:var(--text-muted);font-size:.78rem;line-height:1.6;border-top:1px solid var(--border);padding-top:16px;}
 
+
+  /* ---------- LIVE LEADERBOARD ---------- */
+  .raffle-card{
+    background:var(--hero-bg); color:var(--hero-text);
+    border-radius:14px; padding:26px 28px; text-align:center;
+    margin-bottom:28px;
+  }
+  .raffle-label{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--hero-muted);font-weight:700;margin-bottom:8px;}
+  .raffle-amount{font-family:'Bebas Neue',sans-serif; font-size:clamp(2.4rem,7vw,3.6rem); color:var(--accent); line-height:1;}
+
+  .lb-empty{color:var(--text-muted); font-size:.95rem; padding:6px 0 20px;}
+
+  .lb-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:8px;}
+  .lb-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow);}
+  .lb-card h4{margin:0 0 10px;font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);}
+  .lb-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px dashed var(--border);font-size:.92rem;}
+  .lb-row:first-of-type{border-top:none;}
+  .lb-rank{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:700;width:1.3em;flex:none;}
+  .lb-name{flex:1;}
+  .lb-weight{font-family:'JetBrains Mono',monospace;font-weight:600;font-variant-numeric:tabular-nums;}
+  .lb-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.9rem;padding:0 2px;flex:none;}
+  .lb-del:hover{color:var(--accent);}
+
+  .staff-panel{margin-top:24px;border-top:1px solid var(--border);padding-top:16px;}
+  .staff-link{background:none;border:none;color:var(--text-muted);font-size:.8rem;text-decoration:underline;cursor:pointer;padding:0;font-family:'Libre Franklin',sans-serif;}
+  .staff-box{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;}
+  .staff-box input, .admin-row input, .admin-row select{
+    font-family:'Libre Franklin',sans-serif;font-size:.9rem;padding:9px 11px;border-radius:8px;border:1px solid var(--border);background:var(--bg-sunken);color:var(--text);
+  }
+  .btn-sm{padding:9px 16px;font-size:.85rem;}
+  .staff-error{color:#d64a4a;font-size:.82rem;}
+  .admin-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;}
+  .staff-signout{background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:8px;padding:7px 14px;font-size:.82rem;cursor:pointer;font-family:'Libre Franklin',sans-serif;}
+
   ::selection{background:var(--accent);color:var(--accent-text);}
 </style>
 </head>
@@ -287,7 +321,7 @@
 
     <p class="eyebrow" style="margin-bottom:6px;">Annual &middot; All Ages Welcome</p>
     <h1 class="display hero-title">One Lake.<br>One Day.<br><span class="accent-word">Biggest Fish Wins.</span></h1>
-    <p class="hero-sub">Drop a line with your neighbors on Comet Pond for a morning of tip-ups, thermoses, and bragging rights that last all winter.</p>
+    <p class="hero-sub">Drop a line with your neighbors on Bent/Sawyer Pond for a morning of tip-ups, thermoses, and bragging rights that last all winter.</p>
 
     <div class="scoreboard mono">
       <div class="sb-cell">
@@ -300,7 +334,7 @@
       </div>
       <div class="sb-cell">
         <div class="sb-label" style="font-family:'Libre Franklin',sans-serif;">Location</div>
-        <div class="sb-value">Comet Pond<small>Hubbardston, MA</small></div>
+        <div class="sb-value">Bent/Sawyer Pond<small>Hubbardston, MA</small></div>
       </div>
       <div class="sb-cell">
         <div class="sb-label" style="font-family:'Libre Franklin',sans-serif;">Entry</div>
@@ -321,6 +355,50 @@
 </div>
 
 <div class="wrap">
+
+  <section class="block" id="live">
+    <div class="block-head">
+      <div class="block-kicker">Derby Day</div>
+      <h2 class="block-title">Live Leaderboard &amp; 50/50</h2>
+      <p class="block-desc">Updated from the weigh station as fish come in — refresh isn't needed, this updates live.</p>
+    </div>
+
+    <div class="raffle-card">
+      <div class="raffle-label">50/50 Raffle Pot</div>
+      <div class="raffle-amount mono" id="raffleAmount">$0</div>
+    </div>
+
+    <div id="leaderboardEmpty" class="lb-empty">Leaderboard opens derby morning — check back Jan 23!</div>
+    <div id="leaderboardGroups" class="lb-groups"></div>
+
+    <div class="staff-panel">
+      <button id="staffToggle" class="staff-link" type="button">Derby Staff Login</button>
+      <div id="staffLoginBox" class="staff-box" hidden>
+        <input type="password" id="staffPassword" placeholder="Staff password">
+        <button id="staffSignIn" class="btn btn-primary btn-sm" type="button">Sign In</button>
+        <span id="staffError" class="staff-error"></span>
+      </div>
+      <div id="staffAdminBox" class="staff-box" hidden style="flex-direction:column;align-items:stretch;">
+        <div class="admin-row">
+          <select id="entryCategory">
+            <option>Yellow Perch</option>
+            <option>Chain Pickerel</option>
+            <option>Largemouth Bass</option>
+            <option>Rainbow Trout</option>
+            <option>Youth</option>
+          </select>
+          <input type="text" id="entryAngler" placeholder="Angler name">
+          <input type="number" step="0.01" id="entryWeight" placeholder="Weight (lb)" style="width:9em;">
+          <button id="addEntryBtn" class="btn btn-primary btn-sm" type="button">Add Entry</button>
+        </div>
+        <div class="admin-row">
+          <input type="number" step="1" id="raffleInput" placeholder="50/50 total ($)" style="width:11em;">
+          <button id="updateRaffleBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Update Total</button>
+          <button id="staffSignOut" class="staff-signout" type="button">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <section class="block" id="rules">
     <div class="block-head">
@@ -360,7 +438,7 @@
     <ol class="rules-list">
       <li><span class="rule-num">01</span><span>Anglers 16 and up need a valid Massachusetts freshwater fishing license — bring it with you to check-in.</span></li>
       <li><span class="rule-num">02</span><span>Each angler may fish up to five lines total, in any combination of jigging rods and tip-ups, per state regulations.</span></li>
-      <li><span class="rule-num">03</span><span>Fish must be caught on Comet Pond, during derby hours, to qualify — no fish from other waters or other days.</span></li>
+      <li><span class="rule-num">03</span><span>Fish must be caught on Bent/Sawyer Pond, during derby hours, to qualify — no fish from other waters or other days.</span></li>
       <li><span class="rule-num">04</span><span>All entries are weighed at the official scale near the warming hut. No outside scales or self-reported weights.</span></li>
       <li><span class="rule-num">05</span><span>Ties go to whichever fish was weighed in first. Hubbardston Rod &amp; Gun Club rulings on eligibility are final.</span></li>
       <li><span class="rule-num">06</span><span>Ice conditions are each angler's own responsibility. We recommend a minimum of 4" of solid, clear ice before heading out, and spud bars/cleats are strongly encouraged.</span></li>
@@ -372,7 +450,7 @@
     <div class="block-head">
       <div class="block-kicker">Plan Your Morning</div>
       <h2 class="block-title">Schedule &amp; Logistics</h2>
-      <p class="block-desc">Everything runs off the ice at Comet Pond's public landing — plenty of parking, a warming hut, and hot cocoa on the house.</p>
+      <p class="block-desc">Everything runs off the ice at Bent/Sawyer Pond's public landing — plenty of parking, a warming hut, and hot cocoa on the house.</p>
     </div>
 
     <div class="timeline">
@@ -503,6 +581,135 @@
     var el = document.getElementById('footer-fine');
     if(el){ el.textContent += ' · © ' + new Date().getFullYear(); }
   })();
+</script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  var firebaseConfig = {
+    apiKey: "AIzaSyANrNHmYArhwnz6LcYA8A5kHBWkr2wYHLY",
+    authDomain: "hubbardston-ice-fishing-derby.firebaseapp.com",
+    projectId: "hubbardston-ice-fishing-derby",
+    storageBucket: "hubbardston-ice-fishing-derby.firebasestorage.app",
+    messagingSenderId: "127792029163",
+    appId: "1:127792029163:web:f2f466dd5b56d892914dae"
+  };
+  firebase.initializeApp(firebaseConfig);
+  var auth = firebase.auth();
+  var db = firebase.firestore();
+  var STAFF_EMAIL = "staff@hubbardstonderby.local";
+  var CATEGORY_ORDER = ["Yellow Perch","Chain Pickerel","Largemouth Bass","Rainbow Trout","Youth"];
+
+  var raffleAmountEl = document.getElementById('raffleAmount');
+  var lbEmptyEl = document.getElementById('leaderboardEmpty');
+  var lbGroupsEl = document.getElementById('leaderboardGroups');
+  var staffToggle = document.getElementById('staffToggle');
+  var staffLoginBox = document.getElementById('staffLoginBox');
+  var staffAdminBox = document.getElementById('staffAdminBox');
+  var staffPassword = document.getElementById('staffPassword');
+  var staffError = document.getElementById('staffError');
+
+  staffToggle.addEventListener('click', function(){
+    if (auth.currentUser) return;
+    staffLoginBox.hidden = !staffLoginBox.hidden;
+  });
+
+  document.getElementById('staffSignIn').addEventListener('click', function(){
+    staffError.textContent = '';
+    var pw = staffPassword.value;
+    auth.signInWithEmailAndPassword(STAFF_EMAIL, pw).catch(function(){
+      staffError.textContent = 'Wrong password.';
+    });
+  });
+
+  document.getElementById('staffSignOut').addEventListener('click', function(){ auth.signOut(); });
+
+  auth.onAuthStateChanged(function(user){
+    if (user) {
+      staffLoginBox.hidden = true;
+      staffAdminBox.hidden = false;
+      staffToggle.hidden = true;
+    } else {
+      staffAdminBox.hidden = true;
+      staffToggle.hidden = false;
+      staffPassword.value = '';
+    }
+    renderLeaderboard(latestEntries);
+  });
+
+  document.getElementById('addEntryBtn').addEventListener('click', function(){
+    var category = document.getElementById('entryCategory').value;
+    var angler = document.getElementById('entryAngler').value.trim();
+    var weight = parseFloat(document.getElementById('entryWeight').value);
+    if (!angler || !isFinite(weight)) return;
+    db.collection('entries').add({
+      category: category, angler: angler, weight: weight,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(function(){
+      document.getElementById('entryAngler').value = '';
+      document.getElementById('entryWeight').value = '';
+    });
+  });
+
+  document.getElementById('updateRaffleBtn').addEventListener('click', function(){
+    var val = parseFloat(document.getElementById('raffleInput').value);
+    if (!isFinite(val)) return;
+    db.collection('meta').doc('raffle').set({ total: val }, { merge: true });
+  });
+
+  var latestEntries = [];
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function renderLeaderboard(entries){
+    latestEntries = entries;
+    if (!entries.length) {
+      lbEmptyEl.hidden = false;
+      lbGroupsEl.innerHTML = '';
+      return;
+    }
+    lbEmptyEl.hidden = true;
+    var byCat = {};
+    entries.forEach(function(e){
+      (byCat[e.category] = byCat[e.category] || []).push(e);
+    });
+    var cats = Object.keys(byCat).sort(function(a,b){
+      var ai = CATEGORY_ORDER.indexOf(a), bi = CATEGORY_ORDER.indexOf(b);
+      return (ai<0?99:ai) - (bi<0?99:bi);
+    });
+    var isStaff = !!auth.currentUser;
+    lbGroupsEl.innerHTML = cats.map(function(cat){
+      var top = byCat[cat].slice().sort(function(a,b){ return b.weight-a.weight; }).slice(0,3);
+      var rows = top.map(function(e,i){
+        return '<div class="lb-row"><span class="lb-rank">'+(i+1)+'</span><span class="lb-name">'+escapeHtml(e.angler)+'</span><span class="lb-weight">'+e.weight.toFixed(2)+' lb</span>'+
+          (isStaff ? '<button class="lb-del" data-id="'+e.id+'" title="Remove">✕</button>' : '') +
+          '</div>';
+      }).join('');
+      return '<div class="lb-card"><h4>'+escapeHtml(cat)+'</h4>'+rows+'</div>';
+    }).join('');
+    if (isStaff) {
+      Array.prototype.forEach.call(lbGroupsEl.querySelectorAll('.lb-del'), function(btn){
+        btn.addEventListener('click', function(){ db.collection('entries').doc(btn.dataset.id).delete(); });
+      });
+    }
+  }
+
+  db.collection('entries').onSnapshot(function(snap){
+    var entries = [];
+    snap.forEach(function(doc){ entries.push(Object.assign({id:doc.id}, doc.data())); });
+    renderLeaderboard(entries);
+  }, function(err){ console.error('leaderboard listen error', err); });
+
+  db.collection('meta').doc('raffle').onSnapshot(function(doc){
+    var total = (doc.exists && typeof doc.data().total === 'number') ? doc.data().total : 0;
+    raffleAmountEl.textContent = '$' + total.toLocaleString();
+  }, function(err){ console.error('raffle listen error', err); });
+})();
 </script>
 </body>
 </html>
