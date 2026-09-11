@@ -29,9 +29,12 @@
     --accent:var(--amber-500);
     --accent-text:#3A2205;
     --accent-contrast:var(--snow);
+    --accent2:#0E7C86;
+    --accent2-bg:#E3F4F5;
     --hero-bg:var(--ice-950);
     --hero-text:var(--frost-100);
     --hero-muted:#9FC3D6;
+    --hero-accent2:#6FD8E3;
     --shadow:0 1px 2px rgba(11,38,53,.06),0 8px 24px rgba(11,38,53,.08);
   }
   @media (prefers-color-scheme: dark){
@@ -45,9 +48,12 @@
       --accent:#F09A42;
       --accent-text:#2A1600;
       --accent-contrast:#0A1D28;
+      --accent2:#5ECFDA;
+      --accent2-bg:rgba(94,207,218,.14);
       --hero-bg:#071620;
       --hero-text:#EAF3F8;
       --hero-muted:#7CA3B9;
+      --hero-accent2:#6FD8E3;
       --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
     }
   }
@@ -61,9 +67,12 @@
     --accent:#F09A42;
     --accent-text:#2A1600;
     --accent-contrast:#0A1D28;
+    --accent2:#5ECFDA;
+    --accent2-bg:rgba(94,207,218,.14);
     --hero-bg:#071620;
     --hero-text:#EAF3F8;
     --hero-muted:#7CA3B9;
+    --hero-accent2:#6FD8E3;
     --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
   }
 
@@ -153,7 +162,7 @@
     font-family:'Libre Franklin',sans-serif;
     font-weight:600;
     font-size:.72rem;
-    color:var(--accent);
+    color:var(--hero-accent2);
     text-decoration:underline;
     text-underline-offset:2px;
   }
@@ -190,6 +199,15 @@
   }
   .sb-value{font-size:1.05rem; font-weight:700;}
   .sb-value small{display:block;font-size:.78rem;font-weight:500;color:var(--hero-muted);margin-top:2px;}
+
+  .countdown{
+    display:flex;align-items:center;gap:8px;
+    margin-top:16px;
+    font-size:.85rem;
+    color:var(--hero-muted);
+  }
+  .countdown strong{color:var(--hero-accent2);font-weight:700;}
+  .cd-icon{width:15px;height:15px;color:var(--hero-accent2);flex:none;}
 
   @media (max-width:640px){
     .scoreboard{grid-template-columns:repeat(2,minmax(0,1fr));}
@@ -237,6 +255,20 @@
   .cat-card .fish{width:34px;height:20px;color:var(--accent);margin-bottom:10px;}
   .cat-card h3{font-size:1.02rem;margin:0 0 4px;}
   .cat-card p{margin:0;font-size:.85rem;color:var(--text-muted);}
+
+  .cat-group{margin-bottom:20px;}
+  .cat-group:last-of-type{margin-bottom:0;}
+  .cat-group-label{
+    font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700;
+    color:var(--text-muted);margin-bottom:10px;display:flex;align-items:center;gap:8px;
+  }
+  .cat-group-label--youth{color:var(--accent2);}
+  .cat-group-badge{
+    font-size:.66rem;letter-spacing:.06em;text-transform:none;font-weight:600;
+    background:var(--accent2-bg);color:var(--accent2);border-radius:999px;padding:2px 9px;
+  }
+  .cat-card--youth{border-color:var(--accent2);}
+  .cat-card--youth .fish{color:var(--accent2);}
 
   /* Rules list */
   .rules-list{list-style:none;margin:24px 0 0;padding:0;display:flex;flex-direction:column;gap:14px;}
@@ -290,7 +322,40 @@
     border:1px dashed var(--border);border-radius:10px;height:74px;
     display:flex;align-items:center;justify-content:center;
     color:var(--text-muted);font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;font-weight:600;
+    text-decoration:none;transition:border-color .15s,color .15s,background .15s;
   }
+  .sponsor-slot:hover{border-color:var(--accent);color:var(--accent);background:var(--accent2-bg);}
+  .sponsor-slot--filled{
+    border:1px solid var(--border);background:var(--bg-card);
+    flex-direction:column;gap:4px;height:auto;min-height:74px;padding:14px;
+    text-transform:none;letter-spacing:normal;
+  }
+  .sponsor-slot--filled:hover{border-color:var(--accent2);background:var(--bg-card);color:inherit;}
+  .sponsor-slot--filled .sponsor-tier{
+    font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--accent);
+  }
+  .sponsor-slot--filled .sponsor-name{font-size:.95rem;font-weight:700;color:var(--text);text-transform:none;}
+
+  /* Volunteers */
+  .volunteer-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:18px;
+  }
+  .volunteer-card{
+    background:var(--bg-card);border:1px solid var(--border);border-radius:12px;
+    padding:18px;box-shadow:var(--shadow);
+  }
+  .volunteer-card svg{width:26px;height:26px;color:var(--accent2);margin-bottom:10px;}
+  .volunteer-card h4{margin:0 0 4px;font-size:1rem;}
+  .volunteer-card p{margin:0;font-size:.85rem;color:var(--text-muted);}
+  .volunteer-note{font-size:.85rem;color:var(--text-muted);margin:0;}
+  .volunteer-note a{color:var(--accent2);font-weight:600;}
+  .menu-note{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    border:1px dashed var(--border);border-radius:10px;
+    padding:12px 16px;margin-bottom:14px;
+  }
+  .menu-note-label{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--accent2);}
+  .menu-note-items{font-size:.9rem;color:var(--text);font-weight:600;}
 
   /* FAQ */
   .faq{display:flex;flex-direction:column;gap:22px;}
@@ -387,6 +452,11 @@
       </div>
     </div>
 
+    <div class="countdown mono" id="countdown">
+      <svg class="cd-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span id="cdLabel">Calculating&hellip;</span>
+    </div>
+
     <div class="hero-cta">
       <a class="btn btn-primary" href="https://www.hubbardstonrodandgun.com/contact-us.html" target="_blank" rel="noopener">Get Notified When Registration Opens</a>
       <a class="btn btn-ghost" href="#rules">See Rules &amp; Categories</a>
@@ -456,36 +526,45 @@
       <p class="block-desc">Six categories, one weigh-in station, and a set of rules short enough to read before your coffee's cold.</p>
     </div>
 
-    <div class="cat-grid">
-      <div class="cat-card">
-        <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
-        <h3>Pickerel</h3>
-        <p>Top 3 by weight</p>
+    <div class="cat-group">
+      <div class="cat-group-label">Adult</div>
+      <div class="cat-grid">
+        <div class="cat-card">
+          <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
+          <h3>Pickerel</h3>
+          <p>Top 3 by weight</p>
+        </div>
+        <div class="cat-card">
+          <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
+          <h3>Bass</h3>
+          <p>Top 3 by weight</p>
+        </div>
+        <div class="cat-card">
+          <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
+          <h3>Perch</h3>
+          <p>Top 3 by weight</p>
+        </div>
       </div>
-      <div class="cat-card">
-        <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
-        <h3>Bass</h3>
-        <p>Top 3 by weight</p>
-      </div>
-      <div class="cat-card">
-        <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
-        <h3>Perch</h3>
-        <p>Top 3 by weight</p>
-      </div>
-      <div class="cat-card">
-        <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
-        <h3>Youth Pickerel</h3>
-        <p>12 &amp; under, top 3 by weight</p>
-      </div>
-      <div class="cat-card">
-        <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
-        <h3>Youth Bass</h3>
-        <p>12 &amp; under, top 3 by weight</p>
-      </div>
-      <div class="cat-card">
-        <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
-        <h3>Youth Perch</h3>
-        <p>12 &amp; under, top 3 by weight</p>
+    </div>
+
+    <div class="cat-group">
+      <div class="cat-group-label cat-group-label--youth">Youth <span class="cat-group-badge">12 &amp; Under</span></div>
+      <div class="cat-grid">
+        <div class="cat-card cat-card--youth">
+          <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
+          <h3>Youth Pickerel</h3>
+          <p>Top 3 by weight</p>
+        </div>
+        <div class="cat-card cat-card--youth">
+          <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
+          <h3>Youth Bass</h3>
+          <p>Top 3 by weight</p>
+        </div>
+        <div class="cat-card cat-card--youth">
+          <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
+          <h3>Youth Perch</h3>
+          <p>Top 3 by weight</p>
+        </div>
       </div>
     </div>
 
@@ -510,7 +589,7 @@
     <div class="timeline">
       <div class="tl-row">
         <div class="tl-time mono">5:30 AM</div>
-        <div><div class="tl-label">Check-in &amp; bib pickup</div><div class="tl-sub">Pay entry, get your angler number, drop off tip-up tags</div></div>
+        <div><div class="tl-label">Check-in &amp; bib pickup</div><div class="tl-sub">Pay entry, get your angler number, drop off tip-up tags — look for the tents at the edge of the ice</div></div>
       </div>
       <div class="tl-row">
         <div class="tl-time mono">6:45 AM</div>
@@ -532,10 +611,15 @@
         <div class="tl-time mono">2:30 PM</div>
         <div><div class="tl-label">Awards ceremony</div><div class="tl-sub">Prizes by category, plus the Mystery Weight jackpot draw</div></div>
       </div>
+      <div class="tl-row">
+        <div class="tl-time mono">After Awards</div>
+        <div><div class="tl-label">Meal at the club</div><div class="tl-sub">Head over to the clubhouse for a hot meal made by our derby volunteers, free for all registered anglers</div></div>
+      </div>
     </div>
 
     <div class="logistics-grid">
       <div class="logi-card"><h4>Parking</h4><p>Public landing off Williamsville Rd. Overflow parking is marshaled after 6 AM — follow the signs.</p></div>
+      <div class="logi-card"><h4>Sign-Up &amp; 50/50 Tents</h4><p>Both set up right at the edge of the ice — register for the derby and grab your 50/50 raffle tickets there all morning.</p></div>
       <div class="logi-card"><h4>Bring</h4><p>Auger, skimmer, bucket or sled, ice cleats, and warm layers. A few loaner augers on hand for kids' entries.</p></div>
       <div class="logi-card"><h4>Restrooms</h4><p>Portable facilities near the warming hut, open from check-in through awards.</p></div>
       <div class="logi-card"><h4>Weather policy</h4><p>Unsafe ice moves the derby to the posted rain/thaw date — check this page or our email list that morning.</p></div>
@@ -575,13 +659,53 @@
     </div>
 
     <div class="block-kicker">Thank You To Our Sponsors</div>
+    <!--
+      When a sponsor signs on, swap one of the open tiles below for a filled one, e.g.:
+      <a class="sponsor-slot sponsor-slot--filled" href="https://sponsor-website.com" target="_blank" rel="noopener">
+        <span class="sponsor-tier mono">AUGER</span>
+        <span class="sponsor-name">Sponsor Business Name</span>
+      </a>
+      Drop the sponsor-tier span if a sponsor would rather not be labeled by tier.
+    -->
     <div class="sponsor-open">
-      <div class="sponsor-slot">Open Slot</div>
-      <div class="sponsor-slot">Open Slot</div>
-      <div class="sponsor-slot">Open Slot</div>
-      <div class="sponsor-slot">Open Slot</div>
+      <a class="sponsor-slot" href="https://www.hubbardstonrodandgun.com/contact-us.html" target="_blank" rel="noopener">+ Become a Sponsor</a>
+      <a class="sponsor-slot" href="https://www.hubbardstonrodandgun.com/contact-us.html" target="_blank" rel="noopener">+ Become a Sponsor</a>
+      <a class="sponsor-slot" href="https://www.hubbardstonrodandgun.com/contact-us.html" target="_blank" rel="noopener">+ Become a Sponsor</a>
+      <a class="sponsor-slot" href="https://www.hubbardstonrodandgun.com/contact-us.html" target="_blank" rel="noopener">+ Become a Sponsor</a>
     </div>
-    <a class="btn btn-ghost" style="border-color:var(--border);" href="https://www.hubbardstonrodandgun.com/contact-us.html" target="_blank" rel="noopener">Become a Sponsor</a>
+  </section>
+
+  <section class="block">
+    <div class="block-head">
+      <div class="block-kicker">It Takes A Village</div>
+      <h2 class="block-title">Thank You To Our Volunteers</h2>
+      <p class="block-desc">The derby runs on people who show up before sunrise and stay past the last weigh-in — tickets in hand, clipboards ready, and a hot meal waiting back at the club.</p>
+    </div>
+
+    <div class="volunteer-grid">
+      <div class="volunteer-card">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 11h16a8 8 0 0 1-16 0Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 11c0-3 2-4 1-7M12 11c0-3 2-4 1-7M16 11c0-3 2-4 1-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <h4>Chili &amp; Cocoa Crew</h4>
+        <p>Cooking and serving the meal back at the club after the derby wraps up — a hot plate and a seat by the fire for every angler.</p>
+      </div>
+      <div class="volunteer-card">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V8Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 7v10" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2"/></svg>
+        <h4>50/50 Raffle Tent</h4>
+        <p>Selling tickets from the tent at the edge of the ice all morning, and running the draw at awards.</p>
+      </div>
+      <div class="volunteer-card">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M7 4h10a1 1 0 0 1 1 1v16l-6-3-6 3V5a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 9h6M9 12h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <h4>Sign-Up Tent</h4>
+        <p>Handling check-in and bib pickup right at the edge of the ice, rain, shine, or single-digit wind chill.</p>
+      </div>
+    </div>
+
+    <div class="menu-note">
+      <span class="menu-note-label">On The Menu</span>
+      <span class="menu-note-items">Chili &middot; Hot Cocoa</span>
+    </div>
+
+    <p class="volunteer-note">Want to lend a hand next year? <a href="https://www.hubbardstonrodandgun.com/contact-us.html" target="_blank" rel="noopener">Let the club know</a> — we always need more hands (and more chili).</p>
   </section>
 
   <section class="block">
@@ -634,6 +758,29 @@
   (function(){
     var el = document.getElementById('footer-fine');
     if(el){ el.textContent += ' · © ' + new Date().getFullYear(); }
+  })();
+</script>
+
+<script>
+  (function(){
+    var label = document.getElementById('cdLabel');
+    if(!label) return;
+    var target = new Date(2027, 0, 23, 7, 0, 0).getTime();
+    function pad(n){ return n < 10 ? '0' + n : '' + n; }
+    function tick(){
+      var diff = target - Date.now();
+      if(diff <= 0){
+        label.innerHTML = 'Lines are in — good luck out there!';
+        return;
+      }
+      var s = Math.floor(diff / 1000);
+      var d = Math.floor(s / 86400); s -= d * 86400;
+      var h = Math.floor(s / 3600); s -= h * 3600;
+      var m = Math.floor(s / 60); s -= m * 60;
+      label.innerHTML = '<strong>' + d + '</strong>d <strong>' + pad(h) + '</strong>h <strong>' + pad(m) + '</strong>m <strong>' + pad(s) + '</strong>s until lines in';
+    }
+    tick();
+    setInterval(tick, 1000);
   })();
 </script>
 
