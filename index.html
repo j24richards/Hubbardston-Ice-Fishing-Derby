@@ -415,6 +415,18 @@
   .admin-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;}
   .staff-signout{background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:8px;padding:7px 14px;font-size:.82rem;cursor:pointer;font-family:'Libre Franklin',sans-serif;}
   .upload-status{color:var(--text-muted);font-size:.82rem;margin:-2px 0 10px;}
+  .admin-cat-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+  .admin-cat-tab{padding:7px 13px;border-radius:20px;border:1px solid var(--border);background:var(--bg-sunken);color:var(--text-muted);font-size:.82rem;cursor:pointer;font-family:'Libre Franklin',sans-serif;font-weight:600;}
+  .admin-cat-tab.active{background:var(--accent);color:var(--accent-text);border-color:var(--accent);}
+  .admin-cat-editor{display:flex;flex-direction:column;gap:8px;padding:14px;background:var(--bg-sunken);border-radius:10px;margin-bottom:12px;}
+  .admin-cat-editor-title{font-weight:700;font-size:.9rem;margin-bottom:2px;}
+  .admin-cat-empty{margin:0;color:var(--text-muted);font-size:.85rem;}
+  .admin-entry-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .admin-entry-row .rank-badge{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:700;width:2.2em;flex:none;}
+  .admin-entry-row .admin-entry-name{flex:1;min-width:110px;}
+  .admin-entry-row .admin-entry-weight{width:8em;}
+  .admin-entry-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.95rem;padding:0 2px;flex:none;}
+  .admin-entry-del:hover{color:var(--accent);}
 
   ::selection{background:var(--accent);color:var(--accent-text);}
 </style>
@@ -508,17 +520,17 @@
         <div class="cat-card">
           <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
           <h3>Pickerel</h3>
-          <p>Top 3 by weight</p>
+          <p>Top 4 by weight</p>
         </div>
         <div class="cat-card">
           <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
           <h3>Bass</h3>
-          <p>Top 3 by weight</p>
+          <p>Top 4 by weight</p>
         </div>
         <div class="cat-card">
           <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
           <h3>Perch</h3>
-          <p>Top 3 by weight</p>
+          <p>Top 4 by weight</p>
         </div>
       </div>
     </div>
@@ -761,19 +773,11 @@
       <span id="staffError" class="staff-error"></span>
     </div>
     <div id="staffAdminBox" class="staff-box" hidden style="flex-direction:column;align-items:stretch;">
-      <div class="admin-row">
-        <select id="entryCategory">
-          <option>Pickerel</option>
-          <option>Bass</option>
-          <option>Perch</option>
-          <option>Youth Pickerel</option>
-          <option>Youth Bass</option>
-          <option>Youth Perch</option>
-        </select>
-        <input type="text" id="entryAngler" placeholder="Angler name">
-        <input type="number" step="0.01" id="entryWeight" placeholder="Weight (lb)" style="width:9em;">
-        <button id="addEntryBtn" class="btn btn-primary btn-sm" type="button">Add Entry</button>
+      <div class="admin-row" style="margin-bottom:4px;">
+        <span style="font-size:.82rem;color:var(--text-muted);">Leaderboard — pick a category to update its finishes:</span>
       </div>
+      <div id="adminCatTabs" class="admin-cat-tabs"></div>
+      <div id="adminCatEditor" class="admin-cat-editor"></div>
       <div class="admin-row">
         <input type="number" step="1" id="raffleInput" placeholder="50/50 total ($)" style="width:11em;">
         <button id="updateRaffleBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Update Total</button>
@@ -872,6 +876,9 @@
   var staffAdminBox = document.getElementById('staffAdminBox');
   var staffPassword = document.getElementById('staffPassword');
   var staffError = document.getElementById('staffError');
+  var adminCatTabsEl = document.getElementById('adminCatTabs');
+  var adminCatEditorEl = document.getElementById('adminCatEditor');
+  var activeAdminCat = CATEGORY_ORDER[0];
   var ticketPrizesEmptyEl = document.getElementById('ticketPrizesEmpty');
   var ticketPrizesGridEl = document.getElementById('ticketPrizesGrid');
   var kidsPrizesEmptyEl = document.getElementById('kidsPrizesEmpty');
@@ -887,12 +894,16 @@
     staffLoginBox.hidden = !staffLoginBox.hidden;
   });
 
-  document.getElementById('staffSignIn').addEventListener('click', function(){
+  function attemptStaffSignIn(){
     staffError.textContent = '';
     var pw = staffPassword.value;
     auth.signInWithEmailAndPassword(STAFF_EMAIL, pw).catch(function(){
       staffError.textContent = 'Wrong password.';
     });
+  }
+  document.getElementById('staffSignIn').addEventListener('click', attemptStaffSignIn);
+  staffPassword.addEventListener('keydown', function(e){
+    if (e.key === 'Enter') { e.preventDefault(); attemptStaffSignIn(); }
   });
 
   document.getElementById('staffSignOut').addEventListener('click', function(){ auth.signOut(); });
@@ -910,26 +921,96 @@
     renderLeaderboard(latestEntries);
     renderPrizes('ticket', latestTicketPrizes);
     renderPrizes('kids', latestKidsPrizes);
+    if (user) { renderAdminCatTabs(); renderAdminCatEditor(); }
   });
 
-  document.getElementById('addEntryBtn').addEventListener('click', function(){
-    var category = document.getElementById('entryCategory').value;
-    var angler = document.getElementById('entryAngler').value.trim();
-    var weight = parseFloat(document.getElementById('entryWeight').value);
-    if (!angler || !isFinite(weight)) return;
-    db.collection('entries').add({
-      category: category, angler: angler, weight: weight,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(function(){
-      document.getElementById('entryAngler').value = '';
-      document.getElementById('entryWeight').value = '';
+  function renderAdminCatTabs(){
+    if (!adminCatTabsEl) return;
+    adminCatTabsEl.innerHTML = CATEGORY_ORDER.map(function(cat){
+      return '<button type="button" class="admin-cat-tab'+(cat===activeAdminCat?' active':'')+'" data-cat="'+escapeHtml(cat)+'">'+escapeHtml(cat)+'</button>';
+    }).join('');
+    Array.prototype.forEach.call(adminCatTabsEl.querySelectorAll('.admin-cat-tab'), function(btn){
+      btn.addEventListener('click', function(){
+        activeAdminCat = btn.dataset.cat;
+        renderAdminCatTabs();
+        renderAdminCatEditor();
+      });
     });
-  });
+  }
 
-  document.getElementById('updateRaffleBtn').addEventListener('click', function(){
+  function saveEntryRow(row){
+    var id = row.dataset.id;
+    var name = row.querySelector('.admin-entry-name').value.trim();
+    var weight = parseFloat(row.querySelector('.admin-entry-weight').value);
+    if (!name || !isFinite(weight)) return;
+    db.collection('entries').doc(id).update({ angler: name, weight: weight });
+  }
+
+  function addEntryFromRow(){
+    var nameEl = document.getElementById('newEntryAngler');
+    var weightEl = document.getElementById('newEntryWeight');
+    var name = nameEl.value.trim();
+    var weight = parseFloat(weightEl.value);
+    if (!name || !isFinite(weight)) return;
+    db.collection('entries').add({
+      category: activeAdminCat, angler: name, weight: weight,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }
+
+  function renderAdminCatEditor(){
+    if (!adminCatEditorEl) return;
+    var entries = latestEntries.filter(function(e){ return e.category === activeAdminCat; })
+      .slice().sort(function(a,b){ return b.weight - a.weight; });
+    var rankLabels = ['1st','2nd','3rd','4th'];
+    var rows = entries.map(function(e, i){
+      var label = rankLabels[i] || (i+1)+'th';
+      return '<div class="admin-entry-row" data-id="'+e.id+'">' +
+        '<span class="rank-badge">'+label+'</span>' +
+        '<input type="text" class="admin-entry-name" value="'+escapeHtml(e.angler)+'" placeholder="Angler name">' +
+        '<input type="number" step="0.01" class="admin-entry-weight" value="'+e.weight+'" placeholder="Weight (lb)">' +
+        '<button type="button" class="btn btn-ghost btn-sm admin-entry-save" style="border-color:var(--border);">Save</button>' +
+        '<button type="button" class="admin-entry-del" title="Remove">&#10005;</button>' +
+        '</div>';
+    }).join('');
+    var addRow = '<div class="admin-entry-row admin-entry-add">' +
+      '<span class="rank-badge">+</span>' +
+      '<input type="text" id="newEntryAngler" placeholder="Angler name">' +
+      '<input type="number" step="0.01" id="newEntryWeight" placeholder="Weight (lb)">' +
+      '<button type="button" class="btn btn-primary btn-sm" id="newEntryAddBtn">Add</button>' +
+      '</div>';
+    adminCatEditorEl.innerHTML = '<div class="admin-cat-editor-title">'+escapeHtml(activeAdminCat)+' — finishes</div>' +
+      (rows || '<p class="admin-cat-empty">No entries yet for this category.</p>') + addRow;
+
+    Array.prototype.forEach.call(adminCatEditorEl.querySelectorAll('.admin-entry-row:not(.admin-entry-add)'), function(row){
+      row.querySelector('.admin-entry-save').addEventListener('click', function(){ saveEntryRow(row); });
+      row.querySelector('.admin-entry-del').addEventListener('click', function(){
+        db.collection('entries').doc(row.dataset.id).delete();
+      });
+      Array.prototype.forEach.call(row.querySelectorAll('.admin-entry-name, .admin-entry-weight'), function(input){
+        input.addEventListener('keydown', function(e){
+          if (e.key === 'Enter') { e.preventDefault(); saveEntryRow(row); }
+        });
+      });
+    });
+
+    var newAddBtn = document.getElementById('newEntryAddBtn');
+    newAddBtn.addEventListener('click', addEntryFromRow);
+    Array.prototype.forEach.call(document.querySelectorAll('#newEntryAngler, #newEntryWeight'), function(input){
+      input.addEventListener('keydown', function(e){
+        if (e.key === 'Enter') { e.preventDefault(); addEntryFromRow(); }
+      });
+    });
+  }
+
+  function updateRaffleTotal(){
     var val = parseFloat(document.getElementById('raffleInput').value);
     if (!isFinite(val)) return;
     db.collection('meta').doc('raffle').set({ total: val }, { merge: true });
+  }
+  document.getElementById('updateRaffleBtn').addEventListener('click', updateRaffleTotal);
+  document.getElementById('raffleInput').addEventListener('keydown', function(e){
+    if (e.key === 'Enter') { e.preventDefault(); updateRaffleTotal(); }
   });
 
   var latestEntries = [];
@@ -944,6 +1025,7 @@
     if (!entries.length) {
       lbEmptyEl.hidden = false;
       lbGroupsEl.innerHTML = '';
+      if (auth.currentUser && adminCatEditorEl && !adminCatEditorEl.contains(document.activeElement)) renderAdminCatEditor();
       return;
     }
     lbEmptyEl.hidden = true;
@@ -957,7 +1039,7 @@
     });
     var isStaff = !!auth.currentUser;
     lbGroupsEl.innerHTML = cats.map(function(cat){
-      var top = byCat[cat].slice().sort(function(a,b){ return b.weight-a.weight; }).slice(0,3);
+      var top = byCat[cat].slice().sort(function(a,b){ return b.weight-a.weight; }).slice(0,4);
       var rows = top.map(function(e,i){
         return '<div class="lb-row"><span class="lb-rank">'+(i+1)+'</span><span class="lb-name">'+escapeHtml(e.angler)+'</span><span class="lb-weight">'+e.weight.toFixed(2)+' lb</span>'+
           (isStaff ? '<button class="lb-del" data-id="'+e.id+'" title="Remove">✕</button>' : '') +
@@ -969,6 +1051,7 @@
       Array.prototype.forEach.call(lbGroupsEl.querySelectorAll('.lb-del'), function(btn){
         btn.addEventListener('click', function(){ db.collection('entries').doc(btn.dataset.id).delete(); });
       });
+      if (adminCatEditorEl && !adminCatEditorEl.contains(document.activeElement)) renderAdminCatEditor();
     }
   }
 
