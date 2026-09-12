@@ -315,23 +315,26 @@
   .prize-card h3{margin:6px 0 6px;font-size:1.1rem;}
   .prize-card p{margin:0;color:var(--text-muted);font-size:.9rem;}
 
+  .block--donors{background:var(--bg-sunken);border-radius:20px;padding:36px 28px;border-bottom:none;}
+  @media (max-width:640px){ .block--donors{padding:28px 18px;} }
   .sponsor-open{
-    display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:22px;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:6px;
   }
   .sponsor-slot{
-    border:1px dashed var(--border);border-radius:10px;height:74px;
-    display:flex;align-items:center;justify-content:center;
-    color:var(--text-muted);font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;font-weight:600;
+    border:1.5px dashed var(--border);border-radius:12px;height:88px;
+    display:flex;align-items:center;justify-content:center;text-align:center;padding:10px;
+    color:var(--text-muted);font-size:.8rem;letter-spacing:.04em;text-transform:uppercase;font-weight:700;
     text-decoration:none;transition:border-color .15s,color .15s,background .15s;
   }
   .sponsor-slot:hover{border-color:var(--accent);color:var(--accent);background:var(--accent2-bg);}
   .sponsor-slot--filled{
-    border:1px solid var(--border);background:var(--bg-card);
-    flex-direction:column;gap:4px;height:auto;min-height:74px;padding:14px;
-    text-transform:none;letter-spacing:normal;
+    border:1px solid var(--border);border-top:3px solid var(--accent);background:var(--bg-card);box-shadow:var(--shadow);
+    flex-direction:column;align-items:flex-start;justify-content:center;gap:5px;height:auto;min-height:88px;padding:18px;
+    text-transform:none;letter-spacing:normal;text-align:left;
   }
-  .sponsor-slot--filled:hover{border-color:var(--accent2);background:var(--bg-card);color:inherit;}
-  .sponsor-slot--filled .sponsor-name{font-size:.95rem;font-weight:700;color:var(--text);text-transform:none;}
+  .sponsor-slot--filled:hover{border-color:var(--border);border-top-color:var(--accent2);background:var(--bg-card);color:inherit;}
+  .sponsor-slot--filled .sponsor-tag{font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);}
+  .sponsor-slot--filled .sponsor-name{font-size:1.1rem;font-weight:700;color:var(--text);text-transform:none;line-height:1.25;}
 
   /* Raffle prize photos */
   .prize-photo-grid{
@@ -653,7 +656,7 @@
   <section class="block">
     <div class="block-head">
       <div class="block-kicker">What You Could Win</div>
-      <h2 class="block-title">Prizes &amp; Donors</h2>
+      <h2 class="block-title">Prizes</h2>
       <p class="block-desc">Prizes for every category. Proceeds after costs go toward pond stocking and youth fishing gear.</p>
     </div>
 
@@ -679,13 +682,19 @@
         <p>Every youth entrant is eligible, regardless of species or weight — first tackle box included.</p>
       </div>
     </div>
-    <p style="margin:-8px 0 20px;color:var(--text-muted);font-size:.92rem;max-width:60ch;">Prizes increase if the derby draws more than 100 entrants — last year topped 130. All prizes are awarded after the derby, back at the club.</p>
+    <p style="margin:-8px 0 0;color:var(--text-muted);font-size:.92rem;max-width:60ch;">Prizes increase if the derby draws more than 100 entrants — last year topped 130. All prizes are awarded after the derby, back at the club.</p>
+  </section>
 
-    <div class="block-kicker" style="margin-top:8px;">Thank You To Our Donors</div>
-    <p style="margin:0 0 16px;color:var(--text-muted);font-size:.92rem;max-width:60ch;">This derby runs on donations from local businesses, not paid sponsorship packages — every business that chips in gets a name, a link to their site, and our thanks right here.</p>
+  <section class="block block--donors">
+    <div class="block-head">
+      <div class="block-kicker">Thank You</div>
+      <h2 class="block-title">Our Donors</h2>
+      <p class="block-desc">This derby runs on donations from local businesses, not paid sponsorship packages — every business that chips in gets a name, a link to their site, and our thanks right here.</p>
+    </div>
     <!--
       When a business donates, swap one of the open tiles below for a filled one, e.g.:
       <a class="sponsor-slot sponsor-slot--filled" href="https://donor-website.com" target="_blank" rel="noopener">
+        <span class="sponsor-tag">Local Sponsor</span>
         <span class="sponsor-name">Donor Business Name</span>
       </a>
     -->
