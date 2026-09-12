@@ -541,17 +541,17 @@
         <div class="cat-card cat-card--youth">
           <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
           <h3>Youth Pickerel</h3>
-          <p>Top 3 by weight</p>
+          <p>Winner by weight</p>
         </div>
         <div class="cat-card cat-card--youth">
           <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
           <h3>Youth Bass</h3>
-          <p>Top 3 by weight</p>
+          <p>Winner by weight</p>
         </div>
         <div class="cat-card cat-card--youth">
           <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
           <h3>Youth Perch</h3>
-          <p>Top 3 by weight</p>
+          <p>Winner by weight</p>
         </div>
       </div>
     </div>
@@ -867,6 +867,8 @@
   var MAX_DIM = 1920;
   var JPEG_QUALITY = 0.85;
   var CATEGORY_ORDER = ["Pickerel","Bass","Perch","Youth Pickerel","Youth Bass","Youth Perch"];
+  function isYouthCat(cat){ return cat.indexOf('Youth') === 0; }
+  function catFinishLimit(cat){ return isYouthCat(cat) ? 1 : 4; }
 
   var raffleAmountEl = document.getElementById('raffleAmount');
   var lbEmptyEl = document.getElementById('leaderboardEmpty');
@@ -960,9 +962,13 @@
 
   function renderAdminCatEditor(){
     if (!adminCatEditorEl) return;
-    var entries = latestEntries.filter(function(e){ return e.category === activeAdminCat; })
+    var limit = catFinishLimit(activeAdminCat);
+    var youth = isYouthCat(activeAdminCat);
+    var all = latestEntries.filter(function(e){ return e.category === activeAdminCat; })
       .slice().sort(function(a,b){ return b.weight - a.weight; });
-    var rankLabels = ['1st','2nd','3rd','4th'];
+    var entries = all.slice(0, limit);
+    var overflow = all.length - entries.length;
+    var rankLabels = youth ? ['Top'] : ['1st','2nd','3rd','4th'];
     var rows = entries.map(function(e, i){
       var label = rankLabels[i] || (i+1)+'th';
       return '<div class="admin-entry-row" data-id="'+e.id+'">' +
@@ -973,14 +979,20 @@
         '<button type="button" class="admin-entry-del" title="Remove">&#10005;</button>' +
         '</div>';
     }).join('');
-    var addRow = '<div class="admin-entry-row admin-entry-add">' +
-      '<span class="rank-badge">+</span>' +
-      '<input type="text" id="newEntryAngler" placeholder="Angler name">' +
-      '<input type="number" step="0.01" id="newEntryWeight" placeholder="Weight (lb)">' +
-      '<button type="button" class="btn btn-primary btn-sm" id="newEntryAddBtn">Add</button>' +
-      '</div>';
-    adminCatEditorEl.innerHTML = '<div class="admin-cat-editor-title">'+escapeHtml(activeAdminCat)+' — finishes</div>' +
-      (rows || '<p class="admin-cat-empty">No entries yet for this category.</p>') + addRow;
+    var addRow = '';
+    if (all.length < limit) {
+      addRow = '<div class="admin-entry-row admin-entry-add">' +
+        '<span class="rank-badge">+</span>' +
+        '<input type="text" id="newEntryAngler" placeholder="Angler name">' +
+        '<input type="number" step="0.01" id="newEntryWeight" placeholder="Weight (lb)">' +
+        '<button type="button" class="btn btn-primary btn-sm" id="newEntryAddBtn">Add</button>' +
+        '</div>';
+    }
+    var overflowNote = overflow > 0
+      ? '<p class="admin-cat-empty">'+overflow+' additional ' + (overflow===1?'entry':'entries') + ' recorded below the ' + (youth?'top spot':'4th place cutoff') + ' — delete one above to bring the next one in.</p>'
+      : '';
+    adminCatEditorEl.innerHTML = '<div class="admin-cat-editor-title">'+escapeHtml(activeAdminCat)+' — '+(youth?'top finish':'finishes')+'</div>' +
+      (rows || '<p class="admin-cat-empty">No entries yet for this category.</p>') + addRow + overflowNote;
 
     Array.prototype.forEach.call(adminCatEditorEl.querySelectorAll('.admin-entry-row:not(.admin-entry-add)'), function(row){
       row.querySelector('.admin-entry-save').addEventListener('click', function(){ saveEntryRow(row); });
@@ -995,12 +1007,14 @@
     });
 
     var newAddBtn = document.getElementById('newEntryAddBtn');
-    newAddBtn.addEventListener('click', addEntryFromRow);
-    Array.prototype.forEach.call(document.querySelectorAll('#newEntryAngler, #newEntryWeight'), function(input){
-      input.addEventListener('keydown', function(e){
-        if (e.key === 'Enter') { e.preventDefault(); addEntryFromRow(); }
+    if (newAddBtn) {
+      newAddBtn.addEventListener('click', addEntryFromRow);
+      Array.prototype.forEach.call(document.querySelectorAll('#newEntryAngler, #newEntryWeight'), function(input){
+        input.addEventListener('keydown', function(e){
+          if (e.key === 'Enter') { e.preventDefault(); addEntryFromRow(); }
+        });
       });
-    });
+    }
   }
 
   function updateRaffleTotal(){
@@ -1039,7 +1053,7 @@
     });
     var isStaff = !!auth.currentUser;
     lbGroupsEl.innerHTML = cats.map(function(cat){
-      var top = byCat[cat].slice().sort(function(a,b){ return b.weight-a.weight; }).slice(0,4);
+      var top = byCat[cat].slice().sort(function(a,b){ return b.weight-a.weight; }).slice(0, catFinishLimit(cat));
       var rows = top.map(function(e,i){
         return '<div class="lb-row"><span class="lb-rank">'+(i+1)+'</span><span class="lb-name">'+escapeHtml(e.angler)+'</span><span class="lb-weight">'+e.weight.toFixed(2)+' lb</span>'+
           (isStaff ? '<button class="lb-del" data-id="'+e.id+'" title="Remove">✕</button>' : '') +
