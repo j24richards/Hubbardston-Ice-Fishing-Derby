@@ -341,12 +341,16 @@
     staffLoginBox.hidden = !staffLoginBox.hidden;
   });
 
-  document.getElementById('staffSignIn').addEventListener('click', function(){
+  function attemptStaffSignIn(){
     staffError.textContent = '';
     var pw = staffPassword.value;
     auth.signInWithEmailAndPassword(STAFF_EMAIL, pw).catch(function(){
       staffError.textContent = 'Wrong password.';
     });
+  }
+  document.getElementById('staffSignIn').addEventListener('click', attemptStaffSignIn);
+  staffPassword.addEventListener('keydown', function(e){
+    if (e.key === 'Enter') { e.preventDefault(); attemptStaffSignIn(); }
   });
 
   document.getElementById('staffSignOut').addEventListener('click', function(){ auth.signOut(); });
