@@ -1,0 +1,15 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Hubbardston Rod & Gun Club//Ice Fishing Derby//EN
+CALSCALE:GREGORIAN
+BEGIN:VEVENT
+UID:hubbardston-ice-fishing-derby-2027@hubbardstonrodandgun.com
+DTSTAMP:20260913T000000Z
+DTSTART:20270220T103000Z
+DTEND:20270220T193000Z
+SUMMARY:Hubbardston Ice Fishing Derby
+DESCRIPTION:Check-in from 5:30 AM\, lines in at 7:00 AM. Bring an auger\, skimmer\, bucket or sled\, ice cleats\, and warm layers. Details: https://j24richards.github.io/Hubbardston-Ice-Fishing-Derby/
+LOCATION:Bent/Sawyer Pond (across from Rietta Ranch\, Rt 68)\, Hubbardston\, MA
+URL:https://j24richards.github.io/Hubbardston-Ice-Fishing-Derby/
+END:VEVENT
+END:VCALENDAR
