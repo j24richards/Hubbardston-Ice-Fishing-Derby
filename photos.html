@@ -313,6 +313,12 @@
   firebase.initializeApp(firebaseConfig);
   var auth = firebase.auth();
   var db = firebase.firestore();
+  // Cache data on the phone so the page still shows the last-known photos and queues
+  // writes if the club or pond has weak signal, syncing once it's back.
+  // synchronizeTabs lets this work even with multiple derby pages open in other tabs.
+  db.enablePersistence({synchronizeTabs: true}).catch(function(err){
+    console.warn('Offline cache unavailable:', err.code);
+  });
   var storage = firebase.storage();
   var STAFF_EMAIL = "staff@hubbardstonderby.local";
   var MAX_DIM = 1920;

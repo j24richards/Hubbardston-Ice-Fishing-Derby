@@ -211,6 +211,14 @@
     }
     .hero-inner{padding:28px 20px 32px;}
   }
+  @media (max-width:860px) and (max-height:480px){
+    /* Phone rotated to landscape: the photo's width-based aspect-ratio would otherwise
+       scale up with the wider viewport and fill the entire short screen, leaving the
+       derby name, headline and CTAs invisible below the fold with nothing on screen.
+       (aspect-ratio:auto on its own collapses this to 0 height since a background-image
+       div has no intrinsic size — an explicit height is what actually keeps it visible.) */
+    .hero-photo{aspect-ratio:auto;height:140px;}
+  }
   .hero-top{
     display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
     margin-bottom:28px;
@@ -1047,6 +1055,12 @@
   firebase.initializeApp(firebaseConfig);
   var auth = firebase.auth();
   var db = firebase.firestore();
+  // Cache data on the phone so the page still shows the last-known scores/prizes and
+  // queues writes if the club or pond has weak signal, syncing once it's back.
+  // synchronizeTabs lets this work even with multiple derby pages open in other tabs.
+  db.enablePersistence({synchronizeTabs: true}).catch(function(err){
+    console.warn('Offline cache unavailable:', err.code);
+  });
   var storage = firebase.storage();
   var STAFF_EMAIL = "staff@hubbardstonderby.local";
   var MAX_DIM = 1920;

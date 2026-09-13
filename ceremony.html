@@ -324,6 +324,12 @@
   firebase.initializeApp(firebaseConfig);
   var auth = firebase.auth();
   var db = firebase.firestore();
+  // Cache data on the phone so the sheet still shows the last-known winners/volunteers/
+  // donors and queues writes if the club has weak signal, syncing once it's back.
+  // synchronizeTabs lets this work even with multiple derby pages open in other tabs.
+  db.enablePersistence({synchronizeTabs: true}).catch(function(err){
+    console.warn('Offline cache unavailable:', err.code);
+  });
   var STAFF_EMAIL = "staff@hubbardstonderby.local";
   var CATEGORY_ORDER = ["Pickerel","Bass","Perch","Youth Pickerel","Youth Bass","Youth Perch"];
   function isYouthCat(cat){ return cat.indexOf('Youth') === 0; }
