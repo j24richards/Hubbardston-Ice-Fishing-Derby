@@ -194,6 +194,10 @@
     .name-row .name-main{order:1;}
     .name-row .name-del{order:2;}
     .name-row .name-note{order:3;flex-basis:100%;flex:none;margin-left:0;}
+    /* Bigger, easier-to-tap touch targets on phones (gloves, cold fingers, glare); 16px
+       inputs stop iOS Safari from auto-zooming the page when a field is focused. */
+    .btn-sm{padding:11px 18px;font-size:.92rem;}
+    .staff-box input, .admin-row input{padding:12px 13px;font-size:1rem;}
   }
 
   .cat-card{

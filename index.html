@@ -293,9 +293,6 @@
     .scoreboard{grid-template-columns:repeat(2,minmax(0,1fr));}
     .sb-cell:nth-child(3){border-left:none;}
     .sb-cell:nth-child(3),.sb-cell:nth-child(4){border-top:1px solid var(--border);}
-    /* Bigger, easier-to-tap touch targets on phones (gloves, cold fingers, glare) */
-    .btn-sm{padding:11px 18px;font-size:.92rem;}
-    .staff-box input, .admin-row input, .admin-row select{padding:12px 13px;font-size:1rem;}
     .eyebrow{font-size:.76rem;letter-spacing:.11em;}
     .sb-link, .sb-value small{font-size:.82rem;}
   }
@@ -312,6 +309,10 @@
   }
   .btn-primary{background:var(--accent); color:var(--accent-text);}
   .btn-ghost{background:transparent; color:var(--hero-text); border-color:var(--border);}
+  /* .btn-ghost defaults to light text for use on the dark hero banner. The admin panel
+     sits on the light page background, so its ghost buttons (Update Total, Save, Ceremony
+     Sheet) need dark text here or the labels are nearly invisible. */
+  .staff-panel .btn-ghost{color:var(--text);}
   .hero-note{font-size:.85rem;color:var(--hero-muted);max-width:46ch;margin:0 0 44px;}
 
   /* ---------- ICE DIVIDER ---------- */
@@ -515,6 +516,24 @@
   .admin-entry-row .admin-entry-weight{width:8em;}
   .admin-entry-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.95rem;padding:0 2px;flex:none;}
   .admin-entry-del:hover{color:var(--accent);}
+
+  @media (max-width:640px){
+    /* Bigger, easier-to-tap touch targets on phones (gloves, cold fingers, glare).
+       This has to come after the rules above with the same selectors — CSS falls back
+       to source order on a specificity tie, so a media block placed earlier in the file
+       than the rule it's meant to override loses and silently does nothing. */
+    .btn-sm{padding:11px 18px;font-size:.92rem;}
+    .staff-box input, .admin-row input, .admin-row select{padding:12px 13px;font-size:1rem;}
+    .admin-cat-tab{padding:11px 16px;font-size:.85rem;}
+    /* The entry delete (x) is a bare glyph next to Save — on a phone that's an easy
+       mis-tap that deletes a scored result. Give it a real tap target and push it to
+       the far edge so it isn't touching Save. */
+    .admin-entry-del{
+      width:34px;height:34px;margin-left:auto;font-size:1.1rem;
+      display:inline-flex;align-items:center;justify-content:center;
+      border:1px solid var(--border);border-radius:50%;
+    }
+  }
 
   ::selection{background:var(--accent);color:var(--accent-text);}
 </style>
