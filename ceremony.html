@@ -189,6 +189,13 @@
   }
   .name-row .name-del:hover{background:var(--bg-sunken);color:#d64a4a;}
 
+  @media (max-width:640px){
+    .name-row{flex-wrap:wrap;row-gap:4px;}
+    .name-row .name-main{order:1;}
+    .name-row .name-del{order:2;}
+    .name-row .name-note{order:3;flex-basis:100%;flex:none;margin-left:0;}
+  }
+
   .cat-card{
     border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px;background:var(--bg-card);box-shadow:var(--shadow);
   }
