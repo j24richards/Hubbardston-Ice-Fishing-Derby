@@ -65,6 +65,10 @@
     --hero-muted:#9FC3D6;
     --hero-accent2:#6FD8E3;
     --shadow:0 1px 2px rgba(11,38,53,.06),0 8px 24px rgba(11,38,53,.08);
+    --pickerel:#4C7F2E;
+    --bass:#1D6FA5;
+    --perch:#B9790A;
+    --wm-opacity:.12;
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
@@ -84,6 +88,10 @@
       --hero-muted:#7CA3B9;
       --hero-accent2:#6FD8E3;
       --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+      --pickerel:#7FBF5A;
+      --bass:#4FA3D9;
+      --perch:#E0A83E;
+      --wm-opacity:.16;
     }
   }
   :root[data-theme="dark"]{
@@ -103,6 +111,10 @@
     --hero-muted:#7CA3B9;
     --hero-accent2:#6FD8E3;
     --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+    --pickerel:#7FBF5A;
+    --bass:#4FA3D9;
+    --perch:#E0A83E;
+    --wm-opacity:.16;
   }
 
   /* Outdoor / bright-sun mode: max contrast + bigger touch targets for reading a
@@ -124,6 +136,10 @@
     --hero-muted:#DDDDDD;
     --hero-accent2:#FFD86B;
     --shadow:none;
+    --pickerel:#1F5310;
+    --bass:#00456F;
+    --perch:#7A4A00;
+    --wm-opacity:.05;
   }
   html[data-outdoor="true"] body{font-size:1.14rem;}
   html[data-outdoor="true"] .btn{padding:16px 24px;font-size:1.05rem;border-width:2px;font-weight:800;}
@@ -343,12 +359,22 @@
     display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;
   }
   .cat-card{
+    position:relative;overflow:hidden;
     background:var(--bg-card);border:1px solid var(--border);border-radius:12px;
     padding:18px;box-shadow:var(--shadow);
   }
-  .cat-card .fish{width:34px;height:20px;color:var(--accent);margin-bottom:10px;}
-  .cat-card h3{font-size:1.02rem;margin:0 0 4px;}
-  .cat-card p{margin:0;font-size:.85rem;color:var(--text-muted);}
+  .cat-card h3{font-size:1.02rem;margin:0 0 4px;position:relative;}
+  .cat-card p{margin:0;font-size:.85rem;color:var(--text-muted);position:relative;}
+  /* Species silhouettes, vector-traced from fish-ID outlines. Every species sits
+     in the same fixed box and scales to fit inside it, so the grid stays even
+     while each fish keeps its own true proportions (pickerel long and low, perch
+     short and deep). The 4% padding is baked into each symbol's viewBox so no
+     tail or fin ever touches an edge. */
+  .cat-card .fish{width:50px;height:30px;display:block;margin-bottom:10px;position:relative;}
+  .cat-card .fish-wm{
+    position:absolute;right:12px;bottom:12px;width:118px;height:62px;
+    opacity:var(--wm-opacity);pointer-events:none;
+  }
 
   .cat-group{margin-bottom:20px;}
   .cat-group:last-of-type{margin-bottom:0;}
@@ -361,8 +387,33 @@
     font-size:.66rem;letter-spacing:.06em;text-transform:none;font-weight:600;
     background:var(--accent2-bg);color:var(--accent2);border-radius:999px;padding:2px 9px;
   }
-  .cat-card--youth{border-color:var(--accent2);}
-  .cat-card--youth .fish{color:var(--accent2);}
+  /* Species colours. These must stay after the .cat-card .fish rule above —
+     equal specificity means source order decides the winner. */
+  .cat-card--pickerel{border-top:3px solid var(--pickerel);}
+  .cat-card--pickerel .fish,
+  .cat-card--pickerel .fish-jr,
+  .cat-card--pickerel .fish-wm{color:var(--pickerel);}
+  .cat-card--bass{border-top:3px solid var(--bass);}
+  .cat-card--bass .fish,
+  .cat-card--bass .fish-jr,
+  .cat-card--bass .fish-wm{color:var(--bass);}
+  .cat-card--perch{border-top:3px solid var(--perch);}
+  .cat-card--perch .fish,
+  .cat-card--perch .fish-jr,
+  .cat-card--perch .fish-wm{color:var(--perch);}
+
+  /* Youth keeps the species shape and colour, but wears the teal trim and a small
+     ribbon marking the one thing that actually differs: youth categories crown a
+     single winner instead of paying four places. The little fish alongside says
+     "kids" without spending a word of copy on it. Placed after the species rules
+     so the teal border wins. */
+  .cat-card--youth{border-color:var(--accent2);border-top-color:var(--accent2);}
+  .cat-card .fish-pair{display:flex;align-items:flex-end;gap:4px;margin-bottom:10px;}
+  .cat-card .fish-pair .fish{margin-bottom:0;}
+  .cat-card .fish-jr{width:22px;height:14px;display:block;opacity:.85;margin-bottom:2px;}
+  .cat-card .rosette{
+    position:absolute;top:12px;right:14px;width:26px;height:27px;color:var(--accent2);
+  }
 
   /* Rules list */
   .rules-list{list-style:none;margin:24px 0 0;padding:0;display:flex;flex-direction:column;gap:14px;}
@@ -586,7 +637,7 @@
       </div>
       <div class="sb-cell">
         <div class="sb-label" style="font-family:'Libre Franklin',sans-serif;">Location</div>
-        <div class="sb-value">Bent/Sawyer Pond<small>Across from Rietta Ranch, Rt 68 &middot; <a class="sb-link" href="https://www.google.com/maps/search/?api=1&amp;query=Rietta+Ranch%2C+Hubbardston%2C+MA" target="_blank" rel="noopener">Maps</a> &middot; <a class="sb-link" href="https://waze.com/ul?q=Rietta+Ranch%2C+Hubbardston%2C+MA&amp;navigate=yes" target="_blank" rel="noopener">Waze</a></small></div>
+        <div class="sb-value">Bent/Sawyer Pond<small>Across from Rietta Ranch, Rt 68 &middot; <a class="sb-link" href="https://www.google.com/maps/search/?api=1&amp;query=Rietta+Ranch%2C+Hubbardston%2C+MA" target="_blank" rel="noopener">Maps</a> &middot; <a class="sb-link" href="https://waze.com/ul?q=Rietta%20Ranch%2C%20Hubbardston%2C%20MA&amp;navigate=yes" target="_blank" rel="noopener">Waze</a></small></div>
       </div>
       <div class="sb-cell">
         <div class="sb-label" style="font-family:'Libre Franklin',sans-serif;">Entry</div>
@@ -647,21 +698,33 @@
       <p class="block-desc">Six categories, one weigh-in station, and a set of rules short enough to read before your coffee's cold.</p>
     </div>
 
+    <!-- Fish silhouettes, vector-traced from species ID outlines. Defined once
+         here and referenced by <use> below so each shape ships only once. -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+      <symbol id="fish-pickerel" viewBox="-40 -13 1080 340" preserveAspectRatio="xMidYMid meet"><path d="M1000.0,80.4 L1000.0,115.4 L986.0,136.4 L975.5,160.8 L979.0,223.8 L986.0,241.3 L982.5,262.2 L975.5,269.2 L958.0,269.2 L944.1,262.2 L905.6,234.3 L895.1,230.8 L884.6,220.3 L874.1,216.8 L835.7,216.8 L832.2,220.3 L835.7,258.7 L828.7,279.7 L804.2,300.7 L765.7,300.7 L748.3,290.2 L720.3,262.2 L702.8,234.3 L643.4,234.3 L639.9,237.8 L639.9,262.2 L643.4,265.7 L643.4,286.7 L650.3,297.2 L650.3,304.2 L643.4,314.7 L629.4,311.2 L580.4,276.2 L542.0,276.2 L510.5,248.3 L503.5,230.8 L493.0,220.3 L384.6,220.3 L381.1,223.8 L381.1,241.3 L398.6,272.7 L398.6,283.2 L391.6,290.2 L374.1,286.7 L367.1,279.7 L346.2,272.7 L318.2,255.2 L304.2,255.2 L300.7,258.7 L300.7,276.2 L290.2,286.7 L290.2,293.7 L276.2,307.7 L262.2,307.7 L244.8,286.7 L230.8,258.7 L230.8,251.7 L220.3,234.3 L216.8,206.3 L213.3,202.8 L167.8,199.3 L164.3,195.8 L146.9,195.8 L143.4,192.3 L122.4,192.3 L118.9,188.8 L87.4,185.3 L73.4,178.3 L42.0,171.3 L14.0,157.3 L0.0,143.4 L0.0,129.4 L7.0,122.4 L7.0,111.9 L14.0,104.9 L69.9,97.9 L80.4,90.9 L90.9,90.9 L101.4,83.9 L136.4,73.4 L143.4,66.4 L150.3,66.4 L178.3,52.4 L223.8,45.5 L255.2,31.5 L307.7,24.5 L311.2,21.0 L332.2,21.0 L335.7,17.5 L416.1,17.5 L419.6,21.0 L444.1,21.0 L447.6,24.5 L472.0,24.5 L475.5,28.0 L545.5,31.5 L549.0,35.0 L576.9,35.0 L580.4,38.5 L597.9,38.5 L601.4,42.0 L646.9,45.5 L667.8,52.4 L688.8,52.4 L716.8,62.9 L744.8,62.9 L786.7,17.5 L811.2,0.0 L818.2,0.0 L828.7,14.0 L828.7,24.5 L839.2,42.0 L839.2,55.9 L849.7,73.4 L849.7,90.9 L839.2,101.4 L839.2,115.4 L856.6,125.9 L877.6,125.9 L895.1,118.9 L923.1,90.9 L965.0,66.4 L989.5,66.4 Z" fill="currentColor"/></symbol>
+      <symbol id="fish-bass" viewBox="-40 -16 1080 445" preserveAspectRatio="xMidYMid meet"><path d="M1000.0,77.6 L1000.0,93.9 L995.9,98.0 L995.9,110.2 L991.8,114.3 L987.8,134.7 L963.3,183.7 L963.3,208.2 L971.4,224.5 L971.4,236.7 L991.8,273.5 L991.8,281.6 L1000.0,298.0 L1000.0,318.4 L975.5,318.4 L971.4,314.3 L951.0,310.2 L938.8,302.0 L930.6,302.0 L906.1,289.8 L898.0,289.8 L877.6,277.6 L869.4,277.6 L828.6,257.1 L791.8,253.1 L787.8,249.0 L767.3,249.0 L751.0,257.1 L751.0,330.6 L746.9,334.7 L746.9,342.9 L738.8,355.1 L738.8,363.3 L730.6,379.6 L710.2,395.9 L669.4,395.9 L665.3,391.8 L657.1,391.8 L620.4,371.4 L612.2,371.4 L579.6,355.1 L571.4,346.9 L563.3,346.9 L546.9,330.6 L428.6,326.5 L424.5,330.6 L367.3,330.6 L363.3,334.7 L363.3,371.4 L351.0,387.8 L346.9,412.2 L338.8,412.2 L326.5,400.0 L322.4,400.0 L293.9,367.3 L277.6,334.7 L261.2,322.4 L228.6,322.4 L224.5,318.4 L191.8,314.3 L167.3,302.0 L159.2,302.0 L146.9,293.9 L81.6,277.6 L8.2,232.7 L0.0,220.4 L0.0,204.1 L8.2,191.8 L44.9,163.3 L195.9,93.9 L204.1,93.9 L220.4,85.7 L232.7,85.7 L249.0,77.6 L265.3,77.6 L269.4,73.5 L285.7,73.5 L289.8,69.4 L310.2,69.4 L322.4,57.1 L326.5,44.9 L342.9,36.7 L346.9,24.5 L363.3,24.5 L371.4,16.3 L420.4,16.3 L424.5,20.4 L440.8,20.4 L444.9,24.5 L457.1,24.5 L465.3,32.7 L477.6,32.7 L485.7,44.9 L510.2,44.9 L526.5,28.6 L538.8,28.6 L551.0,20.4 L567.3,20.4 L571.4,16.3 L579.6,16.3 L608.2,4.1 L620.4,4.1 L624.5,0.0 L661.2,0.0 L665.3,4.1 L685.7,4.1 L693.9,16.3 L706.1,16.3 L710.2,24.5 L718.4,24.5 L718.4,28.6 L730.6,40.8 L730.6,53.1 L734.7,57.1 L734.7,98.0 L730.6,102.0 L730.6,114.3 L722.4,122.4 L722.4,138.8 L726.5,142.9 L738.8,142.9 L742.9,146.9 L767.3,146.9 L771.4,151.0 L787.8,151.0 L791.8,146.9 L816.3,142.9 L832.7,130.6 L881.6,106.1 L889.8,106.1 L902.0,98.0 L910.2,98.0 L938.8,85.7 L951.0,85.7 L971.4,77.6 Z" fill="currentColor"/></symbol>
+      <symbol id="fish-perch" viewBox="-40 -21 1080 563" preserveAspectRatio="xMidYMid meet"><path d="M0.0,279.8 L2.4,294.4 L14.6,306.6 L26.8,328.5 L41.4,343.1 L116.8,377.1 L160.6,391.7 L194.6,394.2 L250.6,416.1 L270.1,420.9 L289.5,420.9 L330.9,442.8 L386.9,462.3 L408.8,459.9 L418.5,464.7 L457.4,464.7 L462.3,469.6 L469.6,469.6 L469.6,464.7 L459.9,455.0 L447.7,450.1 L433.1,433.1 L435.5,420.9 L545.0,423.4 L554.7,430.7 L559.6,450.1 L566.9,462.3 L579.1,462.3 L608.3,496.4 L618.0,503.6 L647.2,506.1 L664.2,520.7 L671.5,520.7 L678.8,508.5 L676.4,476.9 L681.3,462.3 L686.1,416.1 L691.0,403.9 L691.0,382.0 L693.4,379.6 L717.8,377.1 L759.1,365.0 L785.9,365.0 L800.5,372.3 L829.7,379.6 L907.5,413.6 L931.9,418.5 L948.9,418.5 L951.3,420.9 L995.1,420.9 L1000.0,413.6 L1000.0,391.7 L992.7,379.6 L992.7,367.4 L985.4,360.1 L983.0,350.4 L970.8,330.9 L958.6,318.7 L958.6,306.6 L956.2,304.1 L953.8,265.2 L951.3,262.8 L951.3,226.3 L953.8,214.1 L958.6,209.2 L958.6,199.5 L963.5,194.6 L963.5,146.0 L958.6,136.3 L951.3,136.3 L927.0,146.0 L890.5,175.2 L868.6,187.3 L839.4,214.1 L817.5,226.3 L793.2,250.6 L783.5,255.5 L776.2,255.5 L759.1,262.8 L729.9,262.8 L705.6,257.9 L695.9,253.0 L695.9,243.3 L708.0,240.9 L715.3,233.6 L715.3,223.8 L693.4,189.8 L691.0,175.2 L683.7,165.5 L681.3,153.3 L671.5,143.6 L671.5,138.7 L664.2,131.4 L652.1,107.1 L639.9,107.1 L608.3,124.1 L601.0,124.1 L552.3,158.2 L540.1,158.2 L537.7,155.7 L540.1,136.3 L523.1,136.3 L520.7,124.1 L525.5,119.2 L525.5,111.9 L518.2,111.9 L510.9,107.1 L510.9,92.5 L515.8,85.2 L515.8,77.9 L506.1,80.3 L493.9,77.9 L493.9,68.1 L498.8,56.0 L479.3,56.0 L474.5,51.1 L476.9,24.3 L464.7,24.3 L459.9,29.2 L447.7,26.8 L445.3,0.0 L435.5,2.4 L428.2,9.7 L416.1,9.7 L413.6,0.0 L406.3,0.0 L379.6,29.2 L365.0,53.5 L350.4,53.5 L338.2,73.0 L335.8,82.7 L326.0,87.6 L326.0,94.9 L321.2,104.6 L311.4,114.4 L228.7,133.8 L197.1,148.4 L165.5,170.3 L94.9,211.7 L77.9,214.1 L56.0,223.8 L26.8,245.7 L12.2,260.3 Z" fill="currentColor"/></symbol>
+      <symbol id="rosette" viewBox="0 0 100 104" preserveAspectRatio="xMidYMid meet"><path d="M38,64 L30,100 L47,90 L50,100 L53,90 L70,100 L62,64 Z" fill="currentColor" opacity=".75"/><path d="M50.0,12.0 L56.2,18.8 L65.0,16.0 L67.0,25.0 L76.0,27.0 L73.2,35.8 L80.0,42.0 L73.2,48.2 L76.0,57.0 L67.0,59.0 L65.0,68.0 L56.2,65.2 L50.0,72.0 L43.8,65.2 L35.0,68.0 L33.0,59.0 L24.0,57.0 L26.8,48.2 L20.0,42.0 L26.8,35.8 L24.0,27.0 L33.0,25.0 L35.0,16.0 L43.8,18.8 Z" fill="currentColor"/><circle cx="50" cy="42" r="13" fill="var(--bg-card)"/></symbol>
+    </svg>
+
     <div class="cat-group">
       <div class="cat-group-label">Adult</div>
       <div class="cat-grid">
-        <div class="cat-card">
-          <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
+        <div class="cat-card cat-card--pickerel">
+          <svg class="fish-wm" aria-hidden="true"><use href="#fish-pickerel"/></svg>
+          <svg class="fish" aria-hidden="true"><use href="#fish-pickerel"/></svg>
           <h3>Pickerel</h3>
           <p>Top 4 by weight</p>
         </div>
-        <div class="cat-card">
-          <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
+        <div class="cat-card cat-card--bass">
+          <svg class="fish-wm" aria-hidden="true"><use href="#fish-bass"/></svg>
+          <svg class="fish" aria-hidden="true"><use href="#fish-bass"/></svg>
           <h3>Bass</h3>
           <p>Top 4 by weight</p>
         </div>
-        <div class="cat-card">
-          <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
+        <div class="cat-card cat-card--perch">
+          <svg class="fish-wm" aria-hidden="true"><use href="#fish-perch"/></svg>
+          <svg class="fish" aria-hidden="true"><use href="#fish-perch"/></svg>
           <h3>Perch</h3>
           <p>Top 4 by weight</p>
         </div>
@@ -671,18 +734,33 @@
     <div class="cat-group">
       <div class="cat-group-label cat-group-label--youth">Youth <span class="cat-group-badge">12 &amp; Under</span></div>
       <div class="cat-grid">
-        <div class="cat-card cat-card--youth">
-          <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
+        <div class="cat-card cat-card--youth cat-card--pickerel">
+          <svg class="fish-wm" aria-hidden="true"><use href="#fish-pickerel"/></svg>
+          <svg class="rosette" aria-hidden="true"><use href="#rosette"/></svg>
+          <span class="fish-pair">
+            <svg class="fish" aria-hidden="true"><use href="#fish-pickerel"/></svg>
+            <svg class="fish-jr" aria-hidden="true"><use href="#fish-pickerel"/></svg>
+          </span>
           <h3>Youth Pickerel</h3>
           <p>Winner by weight</p>
         </div>
-        <div class="cat-card cat-card--youth">
-          <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
+        <div class="cat-card cat-card--youth cat-card--bass">
+          <svg class="fish-wm" aria-hidden="true"><use href="#fish-bass"/></svg>
+          <svg class="rosette" aria-hidden="true"><use href="#rosette"/></svg>
+          <span class="fish-pair">
+            <svg class="fish" aria-hidden="true"><use href="#fish-bass"/></svg>
+            <svg class="fish-jr" aria-hidden="true"><use href="#fish-bass"/></svg>
+          </span>
           <h3>Youth Bass</h3>
           <p>Winner by weight</p>
         </div>
-        <div class="cat-card cat-card--youth">
-          <svg class="fish" viewBox="0 0 34 20" fill="none"><path d="M2 10c5-8 20-8 25 0-5 8-20 8-25 0Z" stroke="currentColor" stroke-width="1.6"/><path d="M27 10l5-5v10l-5-5Z" fill="currentColor"/></svg>
+        <div class="cat-card cat-card--youth cat-card--perch">
+          <svg class="fish-wm" aria-hidden="true"><use href="#fish-perch"/></svg>
+          <svg class="rosette" aria-hidden="true"><use href="#rosette"/></svg>
+          <span class="fish-pair">
+            <svg class="fish" aria-hidden="true"><use href="#fish-perch"/></svg>
+            <svg class="fish-jr" aria-hidden="true"><use href="#fish-perch"/></svg>
+          </span>
           <h3>Youth Perch</h3>
           <p>Winner by weight</p>
         </div>
@@ -737,12 +815,12 @@
         <div><div class="tl-label">Final weigh-in cutoff</div><div class="tl-sub">Scale closes sharp — if you're not in line by 2:30, your fish can't be weighed</div></div>
       </div>
       <div class="tl-row">
-        <div class="tl-time mono">After Weigh-In</div>
-        <div><div class="tl-label">Awards ceremony</div><div class="tl-sub">Prizes by category, awarded back at the club</div></div>
+        <div class="tl-time mono">Back at the Club</div>
+        <div><div class="tl-label">Meal</div><div class="tl-sub">Head over to the Hubbardston Rod &amp; Gun Club, <a href="https://www.google.com/maps/search/?api=1&amp;query=35+Williamsville+Rd%2C+Hubbardston%2C+MA" target="_blank" rel="noopener">35 Williamsville Rd</a> (<a href="https://waze.com/ul?q=35%20Williamsville%20Rd%2C%20Hubbardston%2C%20MA&amp;navigate=yes" target="_blank" rel="noopener">Waze</a>) for a hot meal made by our derby volunteers, free for all registered anglers</div></div>
       </div>
       <div class="tl-row">
-        <div class="tl-time mono">After Awards</div>
-        <div><div class="tl-label">Meal at the club</div><div class="tl-sub">Head over to the Hubbardston Rod &amp; Gun Club, <a href="https://www.google.com/maps/search/?api=1&amp;query=35+Williamsville+Rd%2C+Hubbardston%2C+MA" target="_blank" rel="noopener">35 Williamsville Rd</a> (<a href="https://waze.com/ul?q=35+Williamsville+Rd%2C+Hubbardston%2C+MA&amp;navigate=yes" target="_blank" rel="noopener">Waze</a>), for a hot meal made by our derby volunteers, free for all registered anglers</div></div>
+        <div class="tl-time mono">After Eating</div>
+        <div><div class="tl-label">Awards ceremony</div><div class="tl-sub">Prizes by category, awarded back at the club</div></div>
       </div>
     </div>
 
@@ -759,7 +837,7 @@
     </div>
 
     <div class="logistics-grid">
-      <div class="logi-card"><h4>Parking</h4><p>Bent/Sawyer Pond is across from Rietta Ranch on Rt 68 — park directly across the street at Rietta Ranch and follow the signs onto the ice. <a href="https://www.google.com/maps/search/?api=1&amp;query=Rietta+Ranch%2C+Hubbardston%2C+MA" target="_blank" rel="noopener" style="color:var(--accent2);font-weight:700;">Get directions (Maps) &rarr;</a> &middot; <a href="https://waze.com/ul?q=Rietta+Ranch%2C+Hubbardston%2C+MA&amp;navigate=yes" target="_blank" rel="noopener" style="color:var(--accent2);font-weight:700;">Waze</a></p></div>
+      <div class="logi-card"><h4>Parking</h4><p>Bent/Sawyer Pond is across from Rietta Ranch on Rt 68 — park directly across the street at Rietta Ranch and follow the signs onto the ice. <a href="https://www.google.com/maps/search/?api=1&amp;query=Rietta+Ranch%2C+Hubbardston%2C+MA" target="_blank" rel="noopener" style="color:var(--accent2);font-weight:700;">Get directions (Maps) &rarr;</a> &middot; <a href="https://waze.com/ul?q=Rietta%20Ranch%2C%20Hubbardston%2C%20MA&amp;navigate=yes" target="_blank" rel="noopener" style="color:var(--accent2);font-weight:700;">Waze</a></p></div>
       <div class="logi-card"><h4>Sign-Up &amp; Raffles</h4><p>Pre-register at the club bar anytime before derby day to skip the line, or register on the ice starting at 5:30 AM — registration and raffle ticket sales are at the tents by the entrance, next to the porta-potty.</p></div>
       <div class="logi-card"><h4>Bring</h4><p>Auger, skimmer, bucket or sled, ice cleats, warm layers — and a two-way radio tuned to Channel 5 for derby updates and to reach the weigh station. A few loaner augers on hand for kids' entries.</p></div>
       <div class="logi-card"><h4>Restrooms</h4><p>Porta-potty at the entrance onto the ice, right by the registration tents.</p></div>
@@ -950,7 +1028,7 @@
       <a class="btn btn-primary" href="https://www.hubbardstonrodandgun.com/contact-us.html" target="_blank" rel="noopener">Contact the Club</a>
     </div>
     <div class="footer-fine" id="footer-fine">
-      Hosted by the <a href="https://www.hubbardstonrodandgun.com/" target="_blank" rel="noopener">Hubbardston Rod &amp; Gun Club</a> · <a href="https://www.google.com/maps/search/?api=1&amp;query=35+Williamsville+Rd%2C+Hubbardston%2C+MA" target="_blank" rel="noopener">35 Williamsville Rd, Hubbardston, MA</a> (<a href="https://waze.com/ul?q=35+Williamsville+Rd%2C+Hubbardston%2C+MA&amp;navigate=yes" target="_blank" rel="noopener">Waze</a>) · <a href="tel:+19789284490">(978) 928-4490</a> · Details on this page are subject to change as we lock in the season's date and permits.
+      Hosted by the <a href="https://www.hubbardstonrodandgun.com/" target="_blank" rel="noopener">Hubbardston Rod &amp; Gun Club</a> · <a href="https://www.google.com/maps/search/?api=1&amp;query=35+Williamsville+Rd%2C+Hubbardston%2C+MA" target="_blank" rel="noopener">35 Williamsville Rd, Hubbardston, MA</a> (<a href="https://waze.com/ul?q=35%20Williamsville%20Rd%2C%20Hubbardston%2C%20MA&amp;navigate=yes" target="_blank" rel="noopener">Waze</a>) · <a href="tel:+19789284490">(978) 928-4490</a> · Details on this page are subject to change as we lock in the season's date and permits.
     </div>
   </footer>
 </div>
