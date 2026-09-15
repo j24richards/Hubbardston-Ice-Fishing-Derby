@@ -293,6 +293,12 @@
   }
   .sb-value{font-size:1.05rem; font-weight:700;}
   .sb-value small{display:block;font-size:.78rem;font-weight:500;color:var(--hero-muted);margin-top:2px;}
+  /* Bigger invisible tap area on small inline links people actually need to hit with cold
+     or gloved fingers on the ice (directions, calendar) — padding plus a matching negative
+     margin grows the touch target without changing the visible text size or line spacing. */
+  .sb-link, .host-link, .tl-sub a, .logi-card p a, .volunteer-note a, .footer-fine a{
+    display:inline-block; padding:7px 4px; margin:-7px -4px;
+  }
   .sb-link{color:var(--hero-accent2);text-decoration:underline;text-underline-offset:2px;font-weight:700;}
   .sb-link:hover{opacity:.8;}
   .entry-value{display:flex;flex-direction:column;gap:6px;}
@@ -969,7 +975,7 @@
   </section>
 
   <div class="staff-panel">
-    <button id="staffToggle" class="staff-link" type="button">Admin Login</button>
+    <button id="staffToggle" class="btn btn-ghost btn-sm" type="button">Admin Login</button>
     <div id="staffLoginBox" class="staff-box" hidden>
       <input type="password" id="staffPassword" placeholder="Staff password">
       <button id="staffSignIn" class="btn btn-primary btn-sm" type="button">Sign In</button>

@@ -145,8 +145,12 @@
   .back-link{
     font-family:'Libre Franklin',sans-serif; font-weight:700; font-size:.82rem;
     text-decoration:none; color:var(--text-muted); display:inline-flex; align-items:center; gap:6px;
+    /* Padding plus a matching negative margin grows the tap target for cold/gloved fingers
+       without changing the link's visible size or shifting surrounding layout. */
+    padding:9px 6px; margin:-9px -6px;
   }
   .back-link:hover{color:var(--accent);}
+  .footer-fine a{display:inline-block; padding:7px 4px; margin:-7px -4px;}
 
   .outdoor-toggle{
     display:inline-flex;align-items:center;gap:6px;
@@ -262,7 +266,7 @@
     <div id="photoGrid" class="photo-grid"></div>
 
     <div class="staff-panel">
-      <button id="staffToggle" class="staff-link" type="button">Admin Login</button>
+      <button id="staffToggle" class="btn btn-ghost btn-sm" type="button">Admin Login</button>
       <div id="staffLoginBox" class="staff-box" hidden>
         <input type="password" id="staffPassword" placeholder="Staff password">
         <button id="staffSignIn" class="btn btn-primary btn-sm" type="button">Sign In</button>
