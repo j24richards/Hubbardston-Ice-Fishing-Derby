@@ -557,7 +557,15 @@
   .lb-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.9rem;padding:0 2px;flex:none;}
   .lb-del:hover{color:var(--accent);}
 
-  .staff-panel{margin-top:24px;border-top:1px solid var(--border);padding-top:16px;}
+  /* Deliberately understated — this sits in the footer fine print, not styled as a
+     call-to-action, so it doesn't invite visitors who aren't club staff to poke at it. */
+  .staff-panel{margin-top:10px;}
+  .footer-login-link{
+    background:none;border:none;padding:7px 4px;margin:-7px -4px;
+    font-family:'Libre Franklin',sans-serif;font-size:.78rem;color:var(--text-muted);
+    text-decoration:underline;text-underline-offset:2px;cursor:pointer;display:inline-block;
+  }
+  .footer-login-link:hover{color:var(--accent);}
   .staff-link{background:none;border:none;color:var(--text-muted);font-size:.8rem;text-decoration:underline;cursor:pointer;padding:0;font-family:'Libre Franklin',sans-serif;}
   .staff-box{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;}
   .staff-box[hidden]{display:none;}
@@ -974,40 +982,6 @@
     </div>
   </section>
 
-  <div class="staff-panel">
-    <button id="staffToggle" class="btn btn-ghost btn-sm" type="button">Admin Login</button>
-    <div id="staffLoginBox" class="staff-box" hidden>
-      <input type="password" id="staffPassword" placeholder="Staff password">
-      <button id="staffSignIn" class="btn btn-primary btn-sm" type="button">Sign In</button>
-      <span id="staffError" class="staff-error"></span>
-    </div>
-    <div id="staffAdminBox" class="staff-box" hidden style="flex-direction:column;align-items:stretch;">
-      <div class="admin-row" style="margin-bottom:4px;">
-        <span style="font-size:.82rem;color:var(--text-muted);">Leaderboard — pick a category to update its finishes:</span>
-      </div>
-      <div id="adminCatTabs" class="admin-cat-tabs"></div>
-      <div id="adminCatEditor" class="admin-cat-editor"></div>
-      <div class="admin-row">
-        <input type="number" step="1" id="raffleInput" placeholder="50/50 total ($)" style="width:11em;">
-        <button id="updateRaffleBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Update Total</button>
-      </div>
-      <div class="admin-row">
-        <select id="prizeRaffle">
-          <option value="ticket">Ticket Raffle</option>
-          <option value="kids">Kids' Raffle</option>
-        </select>
-        <input type="text" id="prizeName" placeholder="Prize name (optional)">
-        <input type="file" id="prizeFiles" accept="image/*" multiple>
-        <button id="uploadPrizeBtn" class="btn btn-primary btn-sm" type="button">Upload Prize Photo</button>
-      </div>
-      <div id="prizeUploadStatus" class="upload-status"></div>
-      <div class="admin-row">
-        <a href="ceremony.html" class="btn btn-ghost btn-sm" style="border-color:var(--border);">Ceremony Sheet &rarr;</a>
-        <button id="staffSignOut" class="staff-signout" type="button">Sign out</button>
-      </div>
-    </div>
-  </div>
-
   <footer>
     <div class="footer-row">
       <div class="footer-flag-row">
@@ -1021,6 +995,40 @@
     </div>
     <div class="footer-fine" id="footer-fine">
       Hosted by the <a href="https://www.hubbardstonrodandgun.com/" target="_blank" rel="noopener">Hubbardston Rod &amp; Gun Club</a> · <a href="https://www.google.com/maps/search/?api=1&amp;query=35+Williamsville+Rd%2C+Hubbardston%2C+MA" target="_blank" rel="noopener">35 Williamsville Rd, Hubbardston, MA</a> (<a href="https://waze.com/ul?q=35%20Williamsville%20Rd%2C%20Hubbardston%2C%20MA&amp;navigate=yes" target="_blank" rel="noopener">Waze</a>) · <a href="tel:+19789284490">(978) 928-4490</a> · Details on this page are subject to change as we lock in the season's date and permits.
+    </div>
+
+    <div class="staff-panel">
+      <button id="staffToggle" class="footer-login-link" type="button">Admin Login</button>
+      <div id="staffLoginBox" class="staff-box" hidden>
+        <input type="password" id="staffPassword" placeholder="Staff password">
+        <button id="staffSignIn" class="btn btn-primary btn-sm" type="button">Sign In</button>
+        <span id="staffError" class="staff-error"></span>
+      </div>
+      <div id="staffAdminBox" class="staff-box" hidden style="flex-direction:column;align-items:stretch;">
+        <div class="admin-row" style="margin-bottom:4px;">
+          <span style="font-size:.82rem;color:var(--text-muted);">Leaderboard — pick a category to update its finishes:</span>
+        </div>
+        <div id="adminCatTabs" class="admin-cat-tabs"></div>
+        <div id="adminCatEditor" class="admin-cat-editor"></div>
+        <div class="admin-row">
+          <input type="number" step="1" id="raffleInput" placeholder="50/50 total ($)" style="width:11em;">
+          <button id="updateRaffleBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Update Total</button>
+        </div>
+        <div class="admin-row">
+          <select id="prizeRaffle">
+            <option value="ticket">Ticket Raffle</option>
+            <option value="kids">Kids' Raffle</option>
+          </select>
+          <input type="text" id="prizeName" placeholder="Prize name (optional)">
+          <input type="file" id="prizeFiles" accept="image/*" multiple>
+          <button id="uploadPrizeBtn" class="btn btn-primary btn-sm" type="button">Upload Prize Photo</button>
+        </div>
+        <div id="prizeUploadStatus" class="upload-status"></div>
+        <div class="admin-row">
+          <a href="ceremony.html" class="btn btn-ghost btn-sm" style="border-color:var(--border);">Ceremony Sheet &rarr;</a>
+          <button id="staffSignOut" class="staff-signout" type="button">Sign out</button>
+        </div>
+      </div>
     </div>
   </footer>
 </div>
@@ -1160,10 +1168,19 @@
   var uploadPrizeBtn = document.getElementById('uploadPrizeBtn');
   var prizeUploadStatusEl = document.getElementById('prizeUploadStatus');
 
+  function openStaffLogin(){
+    if (auth.currentUser) return;
+    staffLoginBox.hidden = false;
+    staffLoginBox.scrollIntoView({block:'center'});
+    staffPassword.focus();
+  }
   staffToggle.addEventListener('click', function(){
     if (auth.currentUser) return;
     staffLoginBox.hidden = !staffLoginBox.hidden;
   });
+  // Bookmark https://.../#login on a staff phone for one tap straight to the
+  // password field — no need to find the (deliberately unlabeled) footer link.
+  if (location.hash.toLowerCase() === '#login') openStaffLogin();
 
   function attemptStaffSignIn(){
     staffError.textContent = '';
