@@ -1015,6 +1015,10 @@
         </div>
         <div id="adminCatTabs" class="admin-cat-tabs"></div>
         <div id="adminCatEditor" class="admin-cat-editor"></div>
+        <details class="admin-cat-editor" style="padding:0;">
+          <summary style="cursor:pointer;padding:14px;font-weight:700;font-size:.9rem;">Entry log — every fish ever logged, nothing is permanently deleted</summary>
+          <div id="entryLog" style="padding:0 14px 14px;display:flex;flex-direction:column;gap:8px;"></div>
+        </details>
         <div class="admin-row">
           <input type="number" step="1" id="raffleInput" placeholder="50/50 total ($)" style="width:11em;">
           <button id="updateRaffleBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Update Total</button>
@@ -1319,7 +1323,7 @@
     renderLeaderboard(latestEntries);
     renderPrizes('ticket', latestTicketPrizes);
     renderPrizes('kids', latestKidsPrizes);
-    if (user) { renderAdminCatTabs(); renderAdminCatEditor(); }
+    if (user) { renderAdminCatTabs(); renderAdminCatEditor(); renderEntryLog(); }
   });
 
   function renderAdminCatTabs(){
@@ -1366,11 +1370,16 @@
     var id = row.dataset.id;
     var delBtn = row.querySelector('.admin-entry-del');
     var name = row.querySelector('.admin-entry-name').value.trim() || 'this entry';
-    if (!confirm('Remove ' + name + ' from the leaderboard? This can\'t be undone.')) return;
+    if (!confirm('Remove ' + name + ' from the leaderboard? It stays in the entry log and can be restored — nothing is permanently deleted.')) return;
     if (delBtn) { if (delBtn.disabled) return; delBtn.disabled = true; }
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-    db.collection('entries').doc(id).delete().catch(function(err){
-      console.error('delete entry failed', err);
+    // Soft delete: flag + timestamp instead of destroying the document, so
+    // there's always a record of every entry, even ones that get pulled for
+    // a mistake or don't make the top finishes. See renderEntryLog().
+    db.collection('entries').doc(id).update({
+      deleted: true, deletedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(function(err){
+      console.error('remove entry failed', err);
       if (delBtn) delBtn.disabled = false;
       alert('Could not remove entry: ' + err.message);
     });
@@ -1407,7 +1416,7 @@
     if (!adminCatEditorEl) return;
     var limit = catFinishLimit(activeAdminCat);
     var youth = isYouthCat(activeAdminCat);
-    var all = latestEntries.filter(function(e){ return e.category === activeAdminCat; })
+    var all = latestEntries.filter(function(e){ return e.category === activeAdminCat && !e.deleted; })
       .slice().sort(function(a,b){ return b.weight - a.weight; });
     var entries = all.slice(0, limit);
     var overflow = all.length - entries.length;
@@ -1479,16 +1488,25 @@
   }
 
   function renderLeaderboard(entries){
+    // latestEntries keeps EVERY entry ever logged, including removed ones —
+    // nothing is ever purged from Firestore by this app. "Removed" just means
+    // an entry carries deleted:true/deletedAt and is filtered out of the
+    // ranked views below; it still shows (with its timestamp) in the staff
+    // entry log, and can be restored from there.
     latestEntries = entries;
-    if (!entries.length) {
+    var visible = entries.filter(function(e){ return !e.deleted; });
+    if (!visible.length) {
       lbEmptyEl.hidden = false;
       lbGroupsEl.innerHTML = '';
-      if (auth.currentUser && adminCatEditorEl && !adminCatEditorEl.contains(document.activeElement)) renderAdminCatEditor();
+      if (auth.currentUser) {
+        if (adminCatEditorEl && !adminCatEditorEl.contains(document.activeElement)) renderAdminCatEditor();
+        renderEntryLog();
+      }
       return;
     }
     lbEmptyEl.hidden = true;
     var byCat = {};
-    entries.forEach(function(e){
+    visible.forEach(function(e){
       (byCat[e.category] = byCat[e.category] || []).push(e);
     });
     var cats = Object.keys(byCat).sort(function(a,b){
@@ -1508,13 +1526,16 @@
     if (isStaff) {
       Array.prototype.forEach.call(lbGroupsEl.querySelectorAll('.lb-del'), function(btn){
         btn.addEventListener('click', function(){
-          if (!confirm('Remove this entry from the leaderboard? This can\'t be undone.')) return;
-          db.collection('entries').doc(btn.dataset.id).delete().catch(function(err){
+          if (!confirm('Remove this entry from the leaderboard? It stays in the entry log and can be restored — nothing is permanently deleted.')) return;
+          db.collection('entries').doc(btn.dataset.id).update({
+            deleted: true, deletedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }).catch(function(err){
             alert('Could not remove entry: ' + err.message);
           });
         });
       });
       if (adminCatEditorEl && !adminCatEditorEl.contains(document.activeElement)) renderAdminCatEditor();
+      renderEntryLog();
     }
   }
 
@@ -1523,6 +1544,58 @@
     snap.forEach(function(doc){ entries.push(Object.assign({id:doc.id}, doc.data())); });
     renderLeaderboard(entries);
   }, function(err){ console.error('leaderboard listen error', err); });
+
+  // --- Staff-only entry log: every entry ever logged, in case of a mistake.
+  // Nothing is ever hard-deleted — "Remove" just flags an entry as removed
+  // (with a timestamp) so it drops off the ranked leaderboard; it still shows
+  // up here and can be restored. Entries that don't make the top finishes
+  // stay recorded here too, exactly as entered, with a created timestamp. ---
+  function formatLogTime(ts){
+    if (!ts || !ts.toDate) return 'saving…';
+    return ts.toDate().toLocaleString(undefined, { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+  }
+
+  function restoreEntry(id, btn){
+    if (btn) { if (btn.disabled) return; btn.disabled = true; btn.textContent = 'Restoring…'; }
+    db.collection('entries').doc(id).update({
+      deleted: firebase.firestore.FieldValue.delete(),
+      deletedAt: firebase.firestore.FieldValue.delete()
+    }).catch(function(err){
+      console.error('restore entry failed', err);
+      if (btn) { btn.disabled = false; btn.textContent = 'Restore'; }
+      alert('Could not restore entry: ' + err.message);
+    });
+  }
+
+  function renderEntryLog(){
+    var el = document.getElementById('entryLog');
+    if (!el) return;
+    var all = latestEntries.slice().sort(function(a,b){
+      var at = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+      var bt = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+      return bt - at;
+    });
+    if (!all.length) {
+      el.innerHTML = '<p class="admin-cat-empty">No entries logged yet.</p>';
+      return;
+    }
+    el.innerHTML = all.map(function(e){
+      var statusHtml = e.deleted
+        ? '<span style="color:var(--text-muted);">Removed ' + formatLogTime(e.deletedAt) + '</span>' +
+          '<button type="button" class="btn btn-ghost btn-sm entry-log-restore" data-id="' + e.id + '" style="border-color:var(--border);">Restore</button>'
+        : '<span style="color:var(--accent);">Active</span>';
+      return '<div class="admin-entry-row" style="flex-wrap:wrap;">' +
+        '<span style="font-family:\'JetBrains Mono\',monospace;font-size:.78rem;color:var(--text-muted);min-width:10em;">'+formatLogTime(e.createdAt)+'</span>' +
+        '<span style="min-width:7em;color:var(--text-muted);font-size:.8rem;">'+escapeHtml(e.category)+'</span>' +
+        '<span style="flex:1;min-width:8em;">'+escapeHtml(e.angler)+'</span>' +
+        '<span style="font-family:\'JetBrains Mono\',monospace;">'+e.weight+' lb</span>' +
+        '<span style="font-size:.8rem;display:flex;align-items:center;gap:8px;">'+statusHtml+'</span>' +
+        '</div>';
+    }).join('');
+    Array.prototype.forEach.call(el.querySelectorAll('.entry-log-restore'), function(btn){
+      btn.addEventListener('click', function(){ restoreEntry(btn.dataset.id, btn); });
+    });
+  }
 
   db.collection('meta').doc('raffle').onSnapshot(function(doc){
     var total = (doc.exists && typeof doc.data().total === 'number') ? doc.data().total : 0;
