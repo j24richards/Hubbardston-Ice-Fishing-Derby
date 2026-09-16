@@ -1329,8 +1329,32 @@
     var id = row.dataset.id;
     var name = row.querySelector('.admin-entry-name').value.trim();
     var weight = parseFloat(row.querySelector('.admin-entry-weight').value);
+    var saveBtn = row.querySelector('.admin-entry-save');
     if (!name || !isFinite(weight)) return;
-    db.collection('entries').doc(id).update({ angler: name, weight: weight });
+    if (saveBtn) { if (saveBtn.disabled) return; saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+    db.collection('entries').doc(id).update({ angler: name, weight: weight }).then(function(){
+      // Same reasoning as addEntryFromRow: focus stays on the Save button,
+      // which is inside adminCatEditorEl, so the normal listener-driven
+      // re-render gets skipped. Force it so the rank/order actually updates.
+      renderAdminCatEditor();
+    }).catch(function(err){
+      console.error('save entry failed', err);
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
+      alert('Could not save changes: ' + err.message);
+    });
+  }
+
+  function deleteEntryRow(row){
+    var id = row.dataset.id;
+    var delBtn = row.querySelector('.admin-entry-del');
+    if (delBtn) { if (delBtn.disabled) return; delBtn.disabled = true; }
+    db.collection('entries').doc(id).delete().then(function(){
+      renderAdminCatEditor();
+    }).catch(function(err){
+      console.error('delete entry failed', err);
+      if (delBtn) delBtn.disabled = false;
+      alert('Could not remove entry: ' + err.message);
+    });
   }
 
   function addEntryFromRow(){
@@ -1392,9 +1416,7 @@
 
     Array.prototype.forEach.call(adminCatEditorEl.querySelectorAll('.admin-entry-row:not(.admin-entry-add)'), function(row){
       row.querySelector('.admin-entry-save').addEventListener('click', function(){ saveEntryRow(row); });
-      row.querySelector('.admin-entry-del').addEventListener('click', function(){
-        db.collection('entries').doc(row.dataset.id).delete();
-      });
+      row.querySelector('.admin-entry-del').addEventListener('click', function(){ deleteEntryRow(row); });
       Array.prototype.forEach.call(row.querySelectorAll('.admin-entry-name, .admin-entry-weight'), function(input){
         input.addEventListener('keydown', function(e){
           if (e.key === 'Enter') { e.preventDefault(); saveEntryRow(row); }
