@@ -16,6 +16,13 @@ firebase.initializeApp({
 
 var messaging = firebase.messaging();
 
+// Activate this worker immediately instead of sitting in "waiting" behind an
+// older copy of itself — otherwise a page's first-ever subscribe attempt can
+// fail with "no active Service Worker" right after registration, and later
+// updates to this file wouldn't take effect until every open tab was closed.
+self.addEventListener('install', function(event){ self.skipWaiting(); });
+self.addEventListener('activate', function(event){ event.waitUntil(self.clients.claim()); });
+
 // Background messages (tab closed / phone locked) show a system notification.
 messaging.onBackgroundMessage(function(payload) {
   var title = (payload.notification && payload.notification.title) || 'Hubbardston Ice Fishing Derby';

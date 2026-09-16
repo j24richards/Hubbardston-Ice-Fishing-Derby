@@ -1323,7 +1323,14 @@
         }, 15000);
       }
       function done(){ if (timeout) clearTimeout(timeout); return timedOut; }
-      navigator.serviceWorker.register('firebase-messaging-sw.js').then(function(reg){
+      navigator.serviceWorker.register('firebase-messaging-sw.js').then(function(){
+        // register() resolves as soon as the registration exists, but the
+        // worker can still be installing — PushManager.subscribe() (which
+        // getToken() calls under the hood) fails with "no active Service
+        // Worker" if we hand it a registration that isn't active yet.
+        // navigator.serviceWorker.ready waits for that activation.
+        return navigator.serviceWorker.ready;
+      }).then(function(reg){
         return requestNotifyPermission().then(function(perm){
           if (perm !== 'granted') {
             if (!opts.silent) setNotifyStatus("Notifications weren't enabled.");
