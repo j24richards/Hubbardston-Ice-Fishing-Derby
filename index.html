@@ -1310,12 +1310,23 @@
   function addEntryFromRow(){
     var nameEl = document.getElementById('newEntryAngler');
     var weightEl = document.getElementById('newEntryWeight');
+    var addBtn = document.getElementById('newEntryAddBtn');
     var name = nameEl.value.trim();
     var weight = parseFloat(weightEl.value);
     if (!name || !isFinite(weight)) return;
+    if (addBtn) { if (addBtn.disabled) return; addBtn.disabled = true; addBtn.textContent = 'Adding…'; }
     db.collection('entries').add({
       category: activeAdminCat, angler: name, weight: weight,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(function(){
+      // Force a refresh even though focus is still inside the panel (on the
+      // Add button) — otherwise renderLeaderboard()'s focus guard skips the
+      // re-render and the form looks like it did nothing.
+      renderAdminCatEditor();
+    }).catch(function(err){
+      console.error('add entry failed', err);
+      if (addBtn) { addBtn.disabled = false; addBtn.textContent = 'Add'; }
+      alert('Could not add entry: ' + err.message);
     });
   }
 
