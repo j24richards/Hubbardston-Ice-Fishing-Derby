@@ -520,6 +520,14 @@
   .faq-item h3{font-size:1.02rem;margin:0 0 6px;}
   .faq-item p{margin:0;color:var(--text-muted);font-size:.95rem;line-height:1.55;max-width:65ch;}
 
+  /* Notification setup steps (FAQ) */
+  .notify-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:22px;margin-top:14px;max-width:760px;}
+  .notify-steps h4{margin:0 0 8px;font-size:.82rem;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);}
+  .notify-note{margin:0 0 10px;color:var(--text-muted);font-size:.9rem;line-height:1.5;}
+  .notify-ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;}
+  .notify-ol li{display:flex;gap:10px;align-items:baseline;font-size:.92rem;line-height:1.5;}
+  .step-num{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:700;flex:none;width:1.8ch;}
+
   /* Footer */
   footer{
     padding:40px 0 60px;
@@ -1025,6 +1033,30 @@
       <div class="faq-item">
         <h3>Which calendar link should I use?</h3>
         <p>"+ Google Cal" opens Google Calendar directly and only works if that's what you use. "+ Any Calendar" downloads a standard .ics file instead — tap it once it's downloaded (or the download notification) and your phone will offer to open it in whatever calendar app you actually have, Apple Calendar, Outlook, Samsung Calendar, or otherwise.</p>
+      </div>
+      <div class="faq-item">
+        <h3>How do I get a phone notification when a new fish is logged?</h3>
+        <p>Tap the <strong>🔔 Notify me about new catches</strong> button in the Live Leaderboard section above, then allow notifications when your phone asks. The steps differ slightly by phone:</p>
+        <div class="notify-steps">
+          <div class="notify-steps-col">
+            <h4>Android</h4>
+            <ol class="notify-ol">
+              <li><span class="step-num">1</span><span>Tap <strong>🔔 Notify me about new catches</strong> in the Live Leaderboard section.</span></li>
+              <li><span class="step-num">2</span><span>Tap <strong>Allow</strong> on the prompt that pops up. That's it — you're all set.</span></li>
+            </ol>
+          </div>
+          <div class="notify-steps-col">
+            <h4>iPhone &amp; iPad</h4>
+            <p class="notify-note">iPhones only allow site notifications after the page is added to your Home Screen — it's a one-time setup:</p>
+            <ol class="notify-ol">
+              <li><span class="step-num">1</span><span>Open this site in <strong>Safari</strong> (Home Screen notifications only work if it was added from Safari).</span></li>
+              <li><span class="step-num">2</span><span>Tap the <strong>Share</strong> icon at the bottom of the screen — the square with an arrow pointing up.</span></li>
+              <li><span class="step-num">3</span><span>Scroll down the menu and tap <strong>Add to Home Screen</strong>, then tap <strong>Add</strong> in the top corner.</span></li>
+              <li><span class="step-num">4</span><span>Close Safari, then open the Derby from the new icon on your Home Screen — not from Safari.</span></li>
+              <li><span class="step-num">5</span><span>Tap <strong>🔔 Notify me about new catches</strong>, then tap <strong>Allow</strong> when your phone asks.</span></li>
+            </ol>
+          </div>
+        </div>
       </div>
     </div>
   </section>
