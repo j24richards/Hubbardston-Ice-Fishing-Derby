@@ -1308,24 +1308,31 @@
     notifyBtn.addEventListener('click', function(){
       notifyBtn.disabled = true;
       setNotifyStatus('Setting up notifications…');
-      // Some privacy browsers block the Google request this needs without
-      // ever rejecting the promise, so it just hangs — race it against a
-      // timeout instead of leaving the button stuck on "Setting up…" forever.
+      // Only the getToken() step below talks to Google's servers, so it's the
+      // only step some privacy browsers can silently block without ever
+      // rejecting the promise. Registering the service worker is local, and
+      // requestPermission() is waiting on a person to click a prompt — timing
+      // either of those out would wrongly blame the browser for a slow human
+      // or falsely claim it's "blocked" while it's just waiting for a tap.
       var timedOut = false;
-      var timeout = setTimeout(function(){
-        timedOut = true;
-        setNotifyStatus('This is taking too long — this browser may be blocking the connection notifications need. Try allowing this site’s trackers/connections, or use Chrome, Firefox, Edge, or Safari instead.');
-        notifyBtn.disabled = false;
-      }, 15000);
-      function done(){ clearTimeout(timeout); return timedOut; }
+      var timeout = null;
+      function armTimeout(){
+        timeout = setTimeout(function(){
+          timedOut = true;
+          setNotifyStatus('This is taking too long — this browser may be blocking the connection notifications need. Try allowing this site’s trackers/connections, or use Chrome, Firefox, Edge, or Safari instead.');
+          notifyBtn.disabled = false;
+        }, 15000);
+      }
+      function done(){ if (timeout) clearTimeout(timeout); return timedOut; }
       navigator.serviceWorker.register('firebase-messaging-sw.js').then(function(reg){
         return requestNotifyPermission().then(function(perm){
-          if (done()) return;
           if (perm !== 'granted') {
             setNotifyStatus("Notifications weren't enabled.");
             notifyBtn.disabled = false;
             return;
           }
+          setNotifyStatus('Almost there…');
+          armTimeout();
           var messaging = firebase.messaging();
           return messaging.getToken({ vapidKey: NOTIFY_VAPID_KEY, serviceWorkerRegistration: reg }).then(function(token){
             if (done()) return;
