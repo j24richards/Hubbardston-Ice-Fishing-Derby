@@ -1170,7 +1170,23 @@
   }
 
   // --- Push notifications: "Notify me" opts a visitor's device in to a push the
-  // instant staff logs a new leaderboard fish, even if this tab isn't open. ---
+  // instant staff logs a new leaderboard fish, even if this tab isn't open.
+  //
+  // Push support is NOT the same in every browser — this isn't something we
+  // can code around, it's how the platforms work:
+  //   - iPhone/iPad: EVERY browser on iOS (Safari, Chrome, Firefox, DuckDuckGo,
+  //     Brave...) is required by Apple to use Safari's engine under the hood,
+  //     and that engine only allows push notifications for a site that's been
+  //     added to the Home Screen — never in an ordinary browser tab. So on
+  //     iOS this only ever works after "Add to Home Screen," in any browser.
+  //   - Privacy-focused browsers (DuckDuckGo, strict-mode Brave, etc.) block
+  //     a lot of Google-domain requests by default, including the ones
+  //     Firebase Cloud Messaging needs to hand out a push token. That can
+  //     make setup silently fail even on Android/desktop.
+  // Rather than just hiding the button when something's off (which is what
+  // this used to do — and looks exactly like "notifications don't work" with
+  // zero explanation), we now detect the common cases and say specifically
+  // what's going on and what to do about it.
   var NOTIFY_VAPID_KEY = "BN9KJmT1aJXFRJ0NamF8x3wFi3u2xnBjwrsP_OZXZMTPthzzuppe-7kCoAVSEcbrsKhnqNMK1RApsVrdJncjvDY";
   var notifyBtn = document.getElementById('notifyBtn');
   var notifyStatusEl = document.getElementById('notifyStatus');
@@ -1189,11 +1205,55 @@
     });
   }
 
+  function isIOSDevice(){
+    // Covers iPhone/iPad in every iOS browser (they all report Apple's UA
+    // markers because they're all really Safari's engine underneath), plus
+    // iPadOS 13+ which disguises itself as "Macintosh" but has touch support.
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+  function isStandalonePWA(){
+    return (window.navigator.standalone === true) ||
+      (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  }
+  // Wraps Notification.requestPermission, which is a Promise in modern
+  // browsers but an old-style callback in a few WebView-based ones.
+  function requestNotifyPermission(){
+    return new Promise(function(resolve){
+      var result = Notification.requestPermission(resolve);
+      if (result && result.then) result.then(resolve);
+    });
+  }
+
   function initNotifications(){
     if (!notifyBtn) return;
-    var supported = ('serviceWorker' in navigator) && ('Notification' in window) &&
-      window.firebase && firebase.messaging && (!firebase.messaging.isSupported || firebase.messaging.isSupported());
-    if (!supported) { notifyBtn.hidden = true; return; }
+
+    if (isIOSDevice() && !isStandalonePWA()) {
+      // Show the button so it's obvious notifications exist, but explain the
+      // one-time install step up front instead of letting a tap do nothing.
+      notifyBtn.disabled = false;
+      notifyBtn.addEventListener('click', function(){
+        setNotifyStatus('On iPhone/iPad, notifications only work after adding this page to your Home Screen: tap the Share icon, then "Add to Home Screen," then open the Derby from that new icon and tap Notify again from there.');
+      });
+      return;
+    }
+
+    var hasBasicApis = ('serviceWorker' in navigator) && ('Notification' in window) && window.firebase && firebase.messaging;
+    var supported = hasBasicApis && (!firebase.messaging.isSupported || firebase.messaging.isSupported());
+    if (hasBasicApis && firebase.messaging.isSupported) {
+      // isSupported() is itself async in newer SDK versions — handle both.
+      var supportCheck = firebase.messaging.isSupported();
+      if (supportCheck && supportCheck.then) {
+        supportCheck.then(function(ok){ if (!ok) markUnsupported(); }).catch(function(){ markUnsupported(); });
+      }
+    }
+    if (!supported) { markUnsupported(); return; }
+
+    function markUnsupported(){
+      notifyBtn.disabled = true;
+      notifyBtn.textContent = 'Notifications not supported here';
+      setNotifyStatus('This browser doesn’t support push notifications (common in privacy-focused browsers like DuckDuckGo). Try Chrome, Firefox, Edge, or Safari instead.');
+    }
 
     if (Notification.permission === 'granted') {
       notifyBtn.textContent = '🔔 Notifications on';
@@ -1207,8 +1267,19 @@
     notifyBtn.addEventListener('click', function(){
       notifyBtn.disabled = true;
       setNotifyStatus('Setting up notifications…');
+      // Some privacy browsers block the Google request this needs without
+      // ever rejecting the promise, so it just hangs — race it against a
+      // timeout instead of leaving the button stuck on "Setting up…" forever.
+      var timedOut = false;
+      var timeout = setTimeout(function(){
+        timedOut = true;
+        setNotifyStatus('This is taking too long — this browser may be blocking the connection notifications need. Try allowing this site’s trackers/connections, or use Chrome, Firefox, Edge, or Safari instead.');
+        notifyBtn.disabled = false;
+      }, 15000);
+      function done(){ clearTimeout(timeout); return timedOut; }
       navigator.serviceWorker.register('firebase-messaging-sw.js').then(function(reg){
-        return Notification.requestPermission().then(function(perm){
+        return requestNotifyPermission().then(function(perm){
+          if (done()) return;
           if (perm !== 'granted') {
             setNotifyStatus("Notifications weren't enabled.");
             notifyBtn.disabled = false;
@@ -1216,20 +1287,23 @@
           }
           var messaging = firebase.messaging();
           return messaging.getToken({ vapidKey: NOTIFY_VAPID_KEY, serviceWorkerRegistration: reg }).then(function(token){
+            if (done()) return;
             if (!token) {
               setNotifyStatus('Could not turn on notifications — try again.');
               notifyBtn.disabled = false;
               return;
             }
             return saveNotificationToken(token).then(function(){
+              if (done()) return;
               notifyBtn.textContent = '🔔 Notifications on';
               setNotifyStatus("You'll get a notification when a new fish hits the leaderboard.");
             });
           });
         });
       }).catch(function(err){
+        if (done()) return;
         console.warn('Notification setup failed:', err);
-        setNotifyStatus('Something went wrong turning on notifications.');
+        setNotifyStatus('This browser blocked notification setup. Try Chrome, Firefox, Edge, or Safari instead.');
         notifyBtn.disabled = false;
       });
     });
@@ -1367,16 +1441,14 @@
     var origWeight = parseFloat(row.dataset.origWeight);
     var origCategory = row.dataset.origCategory;
     if (name !== origAngler || weight !== origWeight || category !== origCategory) {
-      // Keep a one-step undo point — what this entry looked like right before
-      // this save — so a wrong number, wrong name, or wrong category (easy to
-      // do when two of you are both editing on phones) can be put back with a
-      // tap in the entry log instead of staff having to remember and retype
-      // the right values. A later edit replaces this undo point; it isn't a
-      // full history, just the last step back.
-      payload.previousAngler = origAngler;
-      payload.previousWeight = origWeight;
-      payload.previousCategory = origCategory;
-      payload.previousEditedAt = firebase.firestore.FieldValue.serverTimestamp();
+      // Append (never overwrite) what this entry looked like right before this
+      // save onto its edit history — so a wrong number, wrong name, or wrong
+      // category (easy to do when two of you are both editing on phones) can
+      // always be reverted from the entry log, no matter how many edits ago it
+      // was, not just the most recent one.
+      payload.edits = firebase.firestore.FieldValue.arrayUnion({
+        angler: origAngler, weight: origWeight, category: origCategory, changedAt: new Date()
+      });
     }
     db.collection('entries').doc(id).update(payload).catch(function(err){
       console.error('save entry failed', err);
@@ -1595,23 +1667,33 @@
     });
   }
 
-  function undoEditEntry(id, btn){
-    var e = latestEntries.filter(function(x){ return x.id === id; })[0];
-    if (!e || e.previousAngler === undefined) return;
-    if (btn) { if (btn.disabled) return; btn.disabled = true; btn.textContent = 'Undoing…'; }
-    // Puts the entry back exactly how it was before the last edit, then clears
-    // the undo point — this is a one-step undo, not a full history, so
-    // undoing doesn't itself create a further undo step.
-    db.collection('entries').doc(id).update({
-      angler: e.previousAngler, weight: e.previousWeight, category: e.previousCategory,
-      previousAngler: firebase.firestore.FieldValue.delete(),
-      previousWeight: firebase.firestore.FieldValue.delete(),
-      previousCategory: firebase.firestore.FieldValue.delete(),
-      previousEditedAt: firebase.firestore.FieldValue.delete()
+  function revertToHistoryEntry(id, index, btn){
+    if (btn) { if (btn.disabled) return; btn.disabled = true; btn.textContent = 'Reverting…'; }
+    var ref = db.collection('entries').doc(id);
+    // Runs as a transaction (read the doc, then write) rather than an
+    // optimistic arrayUnion/arrayRemove pair, so this is safe even if the
+    // other admin is editing the same entry on their phone at the same
+    // moment. It swaps in the chosen history entry AND pushes what was
+    // active right before this revert back onto the history list — so a
+    // revert is itself always reversible, and nothing ever falls off the
+    // list. That's what makes every past state permanently recoverable,
+    // not just the most recent one.
+    db.runTransaction(function(tx){
+      return tx.get(ref).then(function(doc){
+        if (!doc.exists) throw new Error('This entry no longer exists.');
+        var data = doc.data();
+        var edits = (data.edits || []).slice();
+        var target = edits[index];
+        if (!target) throw new Error('That history entry changed — reopen the log and try again.');
+        var currentSnapshot = { angler: data.angler, weight: data.weight, category: data.category, changedAt: new Date() };
+        edits.splice(index, 1);
+        edits.push(currentSnapshot);
+        tx.update(ref, { angler: target.angler, weight: target.weight, category: target.category, edits: edits });
+      });
     }).catch(function(err){
-      console.error('undo edit failed', err);
-      if (btn) { btn.disabled = false; btn.textContent = 'Undo edit'; }
-      alert('Could not undo that edit: ' + err.message);
+      console.error('revert failed', err);
+      if (btn) { btn.disabled = false; btn.textContent = 'Revert to this'; }
+      alert('Could not revert: ' + err.message);
     });
   }
 
@@ -1629,15 +1711,25 @@
     }
     el.innerHTML = all.map(function(e){
       var statusHtml;
+      var historyHtml = '';
       if (e.deleted) {
         statusHtml = '<span style="color:var(--text-muted);">Removed ' + formatLogTime(e.deletedAt) + '</span>' +
           '<button type="button" class="btn btn-ghost btn-sm entry-log-restore" data-id="' + e.id + '" style="border-color:var(--border);">Restore</button>';
       } else {
         statusHtml = '<span style="color:var(--accent);">Active</span>';
-        if (e.previousAngler !== undefined) {
-          statusHtml += '<span style="color:var(--text-muted);">edited ' + formatLogTime(e.previousEditedAt) +
-            ' — was ' + escapeHtml(e.previousAngler) + ', ' + e.previousWeight + ' lb, ' + escapeHtml(e.previousCategory) + '</span>' +
-            '<button type="button" class="btn btn-ghost btn-sm entry-log-undo" data-id="' + e.id + '" style="border-color:var(--border);">Undo edit</button>';
+        if (e.edits && e.edits.length) {
+          // Every past version stays listed (oldest edit first below becomes
+          // last shown — newest change on top) with its own revert button, so
+          // any point in this entry's history is reachable, not just the one
+          // right before the last save.
+          historyHtml = '<div style="flex-basis:100%;display:flex;flex-direction:column;gap:4px;margin-top:2px;padding-left:1em;border-left:2px solid var(--border);">' +
+            e.edits.map(function(h, idx){ return {h: h, idx: idx}; }).slice().reverse().map(function(item){
+              return '<div style="font-size:.78rem;color:var(--text-muted);display:flex;align-items:center;flex-wrap:wrap;gap:8px;">' +
+                '<span>was ' + escapeHtml(item.h.angler) + ', ' + item.h.weight + ' lb, ' + escapeHtml(item.h.category) + ' — ' + formatLogTime(item.h.changedAt) + '</span>' +
+                '<button type="button" class="btn btn-ghost btn-sm entry-log-revert" data-id="' + e.id + '" data-index="' + item.idx + '" style="border-color:var(--border);">Revert to this</button>' +
+                '</div>';
+            }).join('') +
+            '</div>';
         }
       }
       return '<div class="admin-entry-row" style="flex-wrap:wrap;">' +
@@ -1646,13 +1738,14 @@
         '<span style="flex:1;min-width:8em;">'+escapeHtml(e.angler)+'</span>' +
         '<span style="font-family:\'JetBrains Mono\',monospace;">'+e.weight+' lb</span>' +
         '<span style="font-size:.8rem;display:flex;align-items:center;flex-wrap:wrap;gap:8px;">'+statusHtml+'</span>' +
+        historyHtml +
         '</div>';
     }).join('');
     Array.prototype.forEach.call(el.querySelectorAll('.entry-log-restore'), function(btn){
       btn.addEventListener('click', function(){ restoreEntry(btn.dataset.id, btn); });
     });
-    Array.prototype.forEach.call(el.querySelectorAll('.entry-log-undo'), function(btn){
-      btn.addEventListener('click', function(){ undoEditEntry(btn.dataset.id, btn); });
+    Array.prototype.forEach.call(el.querySelectorAll('.entry-log-revert'), function(btn){
+      btn.addEventListener('click', function(){ revertToHistoryEntry(btn.dataset.id, parseInt(btn.dataset.index, 10), btn); });
     });
   }
 
