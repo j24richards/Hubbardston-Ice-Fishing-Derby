@@ -1941,10 +1941,14 @@
     emptyEl.hidden = true;
     var isStaff = !!auth.currentUser;
     gridEl.innerHTML = prizes.map(function(p){
+      // Every field here comes from a Firestore document — escape all of it before
+      // building HTML from it, not just the ones that are obviously user-facing text.
+      // A src/data-* attribute built from an unescaped value is just as exploitable
+      // as unescaped text content if a stray quote can ever reach it.
       return '<div class="prize-photo-card">' +
-        '<img src="' + p.url + '" alt="' + (p.name ? escapeHtml(p.name) : 'Raffle prize') + '">' +
+        '<img src="' + escapeHtml(p.url) + '" alt="' + (p.name ? escapeHtml(p.name) : 'Raffle prize') + '">' +
         (p.name ? '<div class="prize-photo-name">' + escapeHtml(p.name) + '</div>' : '') +
-        (isStaff ? '<button class="prize-photo-del" data-id="' + p.id + '" data-path="' + (p.path || '') + '" title="Remove">✕</button>' : '') +
+        (isStaff ? '<button class="prize-photo-del" data-id="' + escapeHtml(p.id) + '" data-path="' + escapeHtml(p.path || '') + '" title="Remove">✕</button>' : '') +
         '</div>';
     }).join('');
     if (isStaff) {
