@@ -590,6 +590,7 @@
   .admin-entry-row .rank-badge{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:700;width:2.2em;flex:none;}
   .admin-entry-row .admin-entry-name{flex:1;min-width:110px;}
   .admin-entry-row .admin-entry-weight{width:8em;}
+  .admin-entry-row .admin-entry-category{width:9.5em;}
   .admin-entry-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.95rem;padding:0 2px;flex:none;}
   .admin-entry-del:hover{color:var(--accent);}
 
@@ -599,7 +600,7 @@
        to source order on a specificity tie, so a media block placed earlier in the file
        than the rule it's meant to override loses and silently does nothing. */
     .btn-sm{padding:11px 18px;font-size:.92rem;}
-    .staff-box input, .admin-row input, .admin-row select{padding:12px 13px;font-size:1rem;}
+    .staff-box input, .admin-row input, .admin-row select, .admin-entry-row select{padding:12px 13px;font-size:1rem;}
     .admin-cat-tab{padding:11px 16px;font-size:.85rem;}
     /* The entry delete (x) is a bare glyph next to Save — on a phone that's an easy
        mis-tap that deletes a scored result. Give it a real tap target and push it to
@@ -1344,6 +1345,8 @@
     var id = row.dataset.id;
     var name = row.querySelector('.admin-entry-name').value.trim();
     var weight = parseFloat(row.querySelector('.admin-entry-weight').value);
+    var categoryEl = row.querySelector('.admin-entry-category');
+    var category = categoryEl ? categoryEl.value : row.dataset.origCategory;
     var saveBtn = row.querySelector('.admin-entry-save');
     if (!name || !isFinite(weight) || weight <= 0) {
       alert('Enter an angler name and a weight greater than 0 before saving.');
@@ -1359,7 +1362,23 @@
     // render from here would just risk landing a beat later and wiping out
     // anything staff has since started typing elsewhere in the panel.
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-    db.collection('entries').doc(id).update({ angler: name, weight: weight }).catch(function(err){
+    var payload = { angler: name, weight: weight, category: category };
+    var origAngler = row.dataset.origAngler;
+    var origWeight = parseFloat(row.dataset.origWeight);
+    var origCategory = row.dataset.origCategory;
+    if (name !== origAngler || weight !== origWeight || category !== origCategory) {
+      // Keep a one-step undo point — what this entry looked like right before
+      // this save — so a wrong number, wrong name, or wrong category (easy to
+      // do when two of you are both editing on phones) can be put back with a
+      // tap in the entry log instead of staff having to remember and retype
+      // the right values. A later edit replaces this undo point; it isn't a
+      // full history, just the last step back.
+      payload.previousAngler = origAngler;
+      payload.previousWeight = origWeight;
+      payload.previousCategory = origCategory;
+      payload.previousEditedAt = firebase.firestore.FieldValue.serverTimestamp();
+    }
+    db.collection('entries').doc(id).update(payload).catch(function(err){
       console.error('save entry failed', err);
       if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
       alert('Could not save changes: ' + err.message);
@@ -1423,10 +1442,19 @@
     var rankLabels = youth ? ['Top'] : ['1st','2nd','3rd','4th'];
     var rows = entries.map(function(e, i){
       var label = rankLabels[i] || (i+1)+'th';
-      return '<div class="admin-entry-row" data-id="'+e.id+'">' +
+      // data-orig-* records what this entry looked like when rendered, so
+      // saveEntryRow can tell whether staff actually changed anything and, if
+      // so, stash those old values as a one-tap "Undo edit" point — covers
+      // the wrong-row, wrong-number, wrong-category kind of mistake, not just
+      // an accidental delete.
+      var catOptions = CATEGORY_ORDER.map(function(c){
+        return '<option value="'+escapeHtml(c)+'"'+(c===e.category?' selected':'')+'>'+escapeHtml(c)+'</option>';
+      }).join('');
+      return '<div class="admin-entry-row" data-id="'+e.id+'" data-orig-angler="'+escapeHtml(e.angler)+'" data-orig-weight="'+e.weight+'" data-orig-category="'+escapeHtml(e.category)+'">' +
         '<span class="rank-badge">'+label+'</span>' +
         '<input type="text" class="admin-entry-name" value="'+escapeHtml(e.angler)+'" placeholder="Angler name">' +
         '<input type="number" step="0.01" class="admin-entry-weight" value="'+e.weight+'" placeholder="Weight (lb)">' +
+        '<select class="admin-entry-category" title="Category — fixes an entry logged under the wrong tab">'+catOptions+'</select>' +
         '<button type="button" class="btn btn-ghost btn-sm admin-entry-save" style="border-color:var(--border);">Save</button>' +
         '<button type="button" class="admin-entry-del" title="Remove">&#10005;</button>' +
         '</div>';
@@ -1567,6 +1595,26 @@
     });
   }
 
+  function undoEditEntry(id, btn){
+    var e = latestEntries.filter(function(x){ return x.id === id; })[0];
+    if (!e || e.previousAngler === undefined) return;
+    if (btn) { if (btn.disabled) return; btn.disabled = true; btn.textContent = 'Undoing…'; }
+    // Puts the entry back exactly how it was before the last edit, then clears
+    // the undo point — this is a one-step undo, not a full history, so
+    // undoing doesn't itself create a further undo step.
+    db.collection('entries').doc(id).update({
+      angler: e.previousAngler, weight: e.previousWeight, category: e.previousCategory,
+      previousAngler: firebase.firestore.FieldValue.delete(),
+      previousWeight: firebase.firestore.FieldValue.delete(),
+      previousCategory: firebase.firestore.FieldValue.delete(),
+      previousEditedAt: firebase.firestore.FieldValue.delete()
+    }).catch(function(err){
+      console.error('undo edit failed', err);
+      if (btn) { btn.disabled = false; btn.textContent = 'Undo edit'; }
+      alert('Could not undo that edit: ' + err.message);
+    });
+  }
+
   function renderEntryLog(){
     var el = document.getElementById('entryLog');
     if (!el) return;
@@ -1580,20 +1628,31 @@
       return;
     }
     el.innerHTML = all.map(function(e){
-      var statusHtml = e.deleted
-        ? '<span style="color:var(--text-muted);">Removed ' + formatLogTime(e.deletedAt) + '</span>' +
-          '<button type="button" class="btn btn-ghost btn-sm entry-log-restore" data-id="' + e.id + '" style="border-color:var(--border);">Restore</button>'
-        : '<span style="color:var(--accent);">Active</span>';
+      var statusHtml;
+      if (e.deleted) {
+        statusHtml = '<span style="color:var(--text-muted);">Removed ' + formatLogTime(e.deletedAt) + '</span>' +
+          '<button type="button" class="btn btn-ghost btn-sm entry-log-restore" data-id="' + e.id + '" style="border-color:var(--border);">Restore</button>';
+      } else {
+        statusHtml = '<span style="color:var(--accent);">Active</span>';
+        if (e.previousAngler !== undefined) {
+          statusHtml += '<span style="color:var(--text-muted);">edited ' + formatLogTime(e.previousEditedAt) +
+            ' — was ' + escapeHtml(e.previousAngler) + ', ' + e.previousWeight + ' lb, ' + escapeHtml(e.previousCategory) + '</span>' +
+            '<button type="button" class="btn btn-ghost btn-sm entry-log-undo" data-id="' + e.id + '" style="border-color:var(--border);">Undo edit</button>';
+        }
+      }
       return '<div class="admin-entry-row" style="flex-wrap:wrap;">' +
         '<span style="font-family:\'JetBrains Mono\',monospace;font-size:.78rem;color:var(--text-muted);min-width:10em;">'+formatLogTime(e.createdAt)+'</span>' +
         '<span style="min-width:7em;color:var(--text-muted);font-size:.8rem;">'+escapeHtml(e.category)+'</span>' +
         '<span style="flex:1;min-width:8em;">'+escapeHtml(e.angler)+'</span>' +
         '<span style="font-family:\'JetBrains Mono\',monospace;">'+e.weight+' lb</span>' +
-        '<span style="font-size:.8rem;display:flex;align-items:center;gap:8px;">'+statusHtml+'</span>' +
+        '<span style="font-size:.8rem;display:flex;align-items:center;flex-wrap:wrap;gap:8px;">'+statusHtml+'</span>' +
         '</div>';
     }).join('');
     Array.prototype.forEach.call(el.querySelectorAll('.entry-log-restore'), function(btn){
       btn.addEventListener('click', function(){ restoreEntry(btn.dataset.id, btn); });
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('.entry-log-undo'), function(btn){
+      btn.addEventListener('click', function(){ undoEditEntry(btn.dataset.id, btn); });
     });
   }
 
