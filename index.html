@@ -590,7 +590,8 @@
       linear-gradient(100deg, var(--hero-bg) 40%, rgba(11,38,53,.4) 75%, rgba(11,38,53,0) 100%),
       url('bass-flag-nopole.webp') right -10px center / auto 155% no-repeat,
       var(--hero-bg);
-    box-shadow:var(--shadow);
+    border:2px solid var(--accent);
+    box-shadow:var(--shadow), 0 0 0 4px rgba(240,154,66,.15);
   }
   .notify-banner .notify-btn{margin-top:0;}
   .notify-banner .notify-status{margin:0;color:var(--hero-muted);}
@@ -1435,7 +1436,7 @@
         if (Notification.permission !== 'granted') return;
         var title = (payload.notification && payload.notification.title) || 'Hubbardston Ice Fishing Derby';
         var body = (payload.notification && payload.notification.body) || 'The leaderboard just updated.';
-        var opts = { body: body, icon: 'apple-touch-icon.png', badge: 'apple-touch-icon.png', tag: 'derby-leaderboard' };
+        var opts = { body: body, icon: 'apple-touch-icon.png', badge: 'apple-touch-icon.png', image: 'bass-flag-nopole.webp', tag: 'derby-leaderboard' };
         navigator.serviceWorker.getRegistration('firebase-messaging-sw.js').then(function(reg){
           if (reg) reg.showNotification(title, opts);
           else new Notification(title, opts);

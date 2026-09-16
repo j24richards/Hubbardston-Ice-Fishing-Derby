@@ -31,6 +31,10 @@ messaging.onBackgroundMessage(function(payload) {
     body: body,
     icon: 'apple-touch-icon.png',
     badge: 'apple-touch-icon.png',
+    // Big picture shown when the notification is expanded (Android Chrome).
+    // Reuses the same bass-on-the-flag graphic that sits behind the
+    // "Notify me" banner on the leaderboard, for a consistent look.
+    image: 'bass-flag-nopole.webp',
     tag: 'derby-leaderboard'
   });
 });
