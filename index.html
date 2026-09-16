@@ -1220,6 +1220,32 @@
   }
   initNotifications();
 
+  // Firebase only auto-shows a notification via the service worker's
+  // onBackgroundMessage when the tab is NOT focused. Since the person most
+  // likely to be looking at a push right after it fires is staff on this
+  // very page (they just clicked Add), we also need a foreground handler —
+  // otherwise the message arrives silently and nothing appears on screen.
+  (function initForegroundNotifications(){
+    var supported = window.firebase && firebase.messaging && (!firebase.messaging.isSupported || firebase.messaging.isSupported());
+    if (!supported) return;
+    try {
+      firebase.messaging().onMessage(function(payload){
+        if (Notification.permission !== 'granted') return;
+        var title = (payload.notification && payload.notification.title) || 'Hubbardston Ice Fishing Derby';
+        var body = (payload.notification && payload.notification.body) || 'The leaderboard just updated.';
+        var opts = { body: body, icon: 'apple-touch-icon.png', badge: 'apple-touch-icon.png', tag: 'derby-leaderboard' };
+        navigator.serviceWorker.getRegistration('firebase-messaging-sw.js').then(function(reg){
+          if (reg) reg.showNotification(title, opts);
+          else new Notification(title, opts);
+        }).catch(function(){
+          new Notification(title, opts);
+        });
+      });
+    } catch (e) {
+      console.warn('Foreground notification handler failed to init:', e);
+    }
+  })();
+
   var raffleAmountEl = document.getElementById('raffleAmount');
   var lbEmptyEl = document.getElementById('leaderboardEmpty');
   var lbGroupsEl = document.getElementById('leaderboardGroups');
