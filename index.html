@@ -527,6 +527,10 @@
   .notify-ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;}
   .notify-ol li{display:flex;gap:10px;align-items:baseline;font-size:.92rem;line-height:1.5;}
   .step-num{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:700;flex:none;width:1.8ch;}
+  .notify-tip{
+    background:var(--accent2-bg);color:var(--accent2);font-weight:600;
+    border-radius:10px;padding:10px 14px;font-size:.88rem;line-height:1.45;margin-bottom:12px;
+  }
 
   /* Footer */
   footer{
@@ -1036,7 +1040,7 @@
       </div>
       <div class="faq-item">
         <h3>How do I get a phone notification when a new fish is logged?</h3>
-        <p>Tap the <strong>🔔 Notify me about new catches</strong> button in the Live Leaderboard section above, then allow notifications when your phone asks. The steps differ slightly by phone:</p>
+        <p>Tap the <strong>🔔 Notify me about new catches</strong> button in the Live Leaderboard section above, then allow notifications when your phone asks. The steps differ slightly by phone — <strong>iPhone owners, set this up a day or two before the derby</strong> so you're not fumbling with it on the ice.</p>
         <div class="notify-steps">
           <div class="notify-steps-col">
             <h4>Android</h4>
@@ -1047,13 +1051,15 @@
           </div>
           <div class="notify-steps-col">
             <h4>iPhone &amp; iPad</h4>
-            <p class="notify-note">iPhones only allow site notifications after the page is added to your Home Screen — it's a one-time setup:</p>
+            <div class="notify-tip">⏰ Do this at home before derby day. It only takes a minute, and it's a lot easier with warm hands than on the ice.</div>
+            <p class="notify-note">iPhones only allow site notifications after the page is added to your Home Screen — a one-time setup:</p>
             <ol class="notify-ol">
-              <li><span class="step-num">1</span><span>Open this site in <strong>Safari</strong> (Home Screen notifications only work if it was added from Safari).</span></li>
-              <li><span class="step-num">2</span><span>Tap the <strong>Share</strong> icon at the bottom of the screen — the square with an arrow pointing up.</span></li>
-              <li><span class="step-num">3</span><span>Scroll down the menu and tap <strong>Add to Home Screen</strong>, then tap <strong>Add</strong> in the top corner.</span></li>
-              <li><span class="step-num">4</span><span>Close Safari, then open the Derby from the new icon on your Home Screen — not from Safari.</span></li>
-              <li><span class="step-num">5</span><span>Tap <strong>🔔 Notify me about new catches</strong>, then tap <strong>Allow</strong> when your phone asks.</span></li>
+              <li><span class="step-num">1</span><span>Open this site in the <strong>Safari</strong> app (the blue compass icon). Other browsers like Chrome can't do this step on iPhone.</span></li>
+              <li><span class="step-num">2</span><span>Tap the <strong>Share</strong> icon in the toolbar — a square with an arrow pointing up ⬆️. On iPhone it's usually at the bottom of the screen; on iPad, top-right.</span></li>
+              <li><span class="step-num">3</span><span>In the menu that pops up, scroll down and tap <strong>Add to Home Screen</strong>.</span></li>
+              <li><span class="step-num">4</span><span>Tap <strong>Add</strong> in the top-right corner to confirm.</span></li>
+              <li><span class="step-num">5</span><span>Find the new <strong>Derby</strong> icon on your Home Screen (it looks like the site's icon, not the Safari compass) and open the site from there — not from Safari.</span></li>
+              <li><span class="step-num">6</span><span>Tap <strong>🔔 Notify me about new catches</strong>, then tap <strong>Allow</strong> when asked. Done — you'll now get catch alerts even with the app closed.</span></li>
             </ol>
           </div>
         </div>
