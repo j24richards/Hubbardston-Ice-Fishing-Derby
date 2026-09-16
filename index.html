@@ -560,6 +560,45 @@
   .notify-btn{margin-top:14px;}
   .notify-status{margin:8px 0 0;font-size:.85rem;color:var(--text-muted);}
 
+  /* Banner behind the notify button/status: the club's bass-on-the-flag mark
+     (pole cropped off, see bass-flag-nopole.webp) fading into the dark hero
+     navy on the left so the text stays easy to read over it. */
+  .notify-banner{
+    margin-top:14px;
+    position:relative;
+    display:inline-flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:6px;
+    padding:16px 150px 16px 20px;
+    border-radius:14px;
+    max-width:560px;
+    color:var(--hero-text);
+    background:
+      linear-gradient(100deg, var(--hero-bg) 40%, rgba(11,38,53,.4) 75%, rgba(11,38,53,0) 100%),
+      url('bass-flag-nopole.webp') right -10px center / auto 155% no-repeat,
+      var(--hero-bg);
+    box-shadow:var(--shadow);
+  }
+  .notify-banner .notify-btn{margin-top:0;}
+  .notify-banner .notify-status{margin:0;color:var(--hero-muted);}
+  /* Outdoor/high-glare mode is all about maximum contrast, so the photo
+     backdrop drops out in favor of a flat, bordered card there. */
+  html[data-outdoor="true"] .notify-banner{
+    background:var(--hero-bg);
+    padding-right:20px;
+    border:2px solid #FFFFFF;
+  }
+  @media (max-width:640px){
+    .notify-banner{
+      max-width:none;
+      padding-right:20px;
+      background-image:linear-gradient(125deg, var(--hero-bg) 55%, rgba(11,38,53,.5) 100%), url('bass-flag-nopole.webp');
+      background-position:center, right -70px center;
+      background-size:cover, auto 200%;
+    }
+  }
+
   /* Deliberately understated — this sits in the footer fine print, not styled as a
      call-to-action, so it doesn't invite visitors who aren't club staff to poke at it. */
   .staff-panel{margin-top:10px;}
@@ -690,8 +729,10 @@
       <div class="block-kicker">Derby Day</div>
       <h2 class="block-title">Live Leaderboard</h2>
       <p class="block-desc">Updated from the weigh station as fish come in — no need to refresh, this updates live.</p>
-      <button type="button" id="notifyBtn" class="btn btn-ghost btn-sm notify-btn">🔔 Notify me about new catches</button>
-      <p id="notifyStatus" class="notify-status" hidden></p>
+      <div class="notify-banner">
+        <button type="button" id="notifyBtn" class="btn btn-ghost btn-sm notify-btn">🔔 Notify me about new catches</button>
+        <p id="notifyStatus" class="notify-status" hidden></p>
+      </div>
     </div>
 
     <div id="leaderboardEmpty" class="lb-empty">Leaderboard opens derby morning — check back Feb 20!</div>
