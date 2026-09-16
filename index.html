@@ -557,6 +557,9 @@
   .lb-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.9rem;padding:0 2px;flex:none;}
   .lb-del:hover{color:var(--accent);}
 
+  .notify-btn{margin-top:14px;}
+  .notify-status{margin:8px 0 0;font-size:.85rem;color:var(--text-muted);}
+
   /* Deliberately understated — this sits in the footer fine print, not styled as a
      call-to-action, so it doesn't invite visitors who aren't club staff to poke at it. */
   .staff-panel{margin-top:10px;}
@@ -686,6 +689,8 @@
       <div class="block-kicker">Derby Day</div>
       <h2 class="block-title">Live Leaderboard</h2>
       <p class="block-desc">Updated from the weigh station as fish come in — no need to refresh, this updates live.</p>
+      <button type="button" id="notifyBtn" class="btn btn-ghost btn-sm notify-btn">🔔 Notify me about new catches</button>
+      <p id="notifyStatus" class="notify-status" hidden></p>
     </div>
 
     <div id="leaderboardEmpty" class="lb-empty">Leaderboard opens derby morning — check back Feb 20!</div>
@@ -1120,6 +1125,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
 <script>
 (function(){
   var firebaseConfig = {
@@ -1146,6 +1152,73 @@
   var CATEGORY_ORDER = ["Pickerel","Bass","Perch","Youth Pickerel","Youth Bass","Youth Perch"];
   function isYouthCat(cat){ return cat.indexOf('Youth') === 0; }
   function catFinishLimit(cat){ return isYouthCat(cat) ? 1 : 4; }
+
+  // --- Push notifications: "Notify me" opts a visitor's device in to a push the
+  // instant staff logs a new leaderboard fish, even if this tab isn't open. ---
+  var NOTIFY_VAPID_KEY = "BN9KJmT1aJXFRJ0NamF8x3wFi3u2xnBjwrsP_OZXZMTPthzzuppe-7kCoAVSEcbrsKhnqNMK1RApsVrdJncjvDY";
+  var notifyBtn = document.getElementById('notifyBtn');
+  var notifyStatusEl = document.getElementById('notifyStatus');
+
+  function setNotifyStatus(text){
+    if (!notifyStatusEl) return;
+    notifyStatusEl.hidden = !text;
+    notifyStatusEl.textContent = text || '';
+  }
+
+  function saveNotificationToken(token){
+    return db.collection('notificationTokens').doc(token).set({
+      token: token,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      userAgent: navigator.userAgent
+    });
+  }
+
+  function initNotifications(){
+    if (!notifyBtn) return;
+    var supported = ('serviceWorker' in navigator) && ('Notification' in window) &&
+      window.firebase && firebase.messaging && (!firebase.messaging.isSupported || firebase.messaging.isSupported());
+    if (!supported) { notifyBtn.hidden = true; return; }
+
+    if (Notification.permission === 'granted') {
+      notifyBtn.textContent = '🔔 Notifications on';
+      notifyBtn.disabled = true;
+    } else if (Notification.permission === 'denied') {
+      notifyBtn.textContent = 'Notifications blocked';
+      notifyBtn.disabled = true;
+      setNotifyStatus("Notifications are blocked for this site in your browser's settings.");
+    }
+
+    notifyBtn.addEventListener('click', function(){
+      notifyBtn.disabled = true;
+      setNotifyStatus('Setting up notifications…');
+      navigator.serviceWorker.register('firebase-messaging-sw.js').then(function(reg){
+        return Notification.requestPermission().then(function(perm){
+          if (perm !== 'granted') {
+            setNotifyStatus("Notifications weren't enabled.");
+            notifyBtn.disabled = false;
+            return;
+          }
+          var messaging = firebase.messaging();
+          return messaging.getToken({ vapidKey: NOTIFY_VAPID_KEY, serviceWorkerRegistration: reg }).then(function(token){
+            if (!token) {
+              setNotifyStatus('Could not turn on notifications — try again.');
+              notifyBtn.disabled = false;
+              return;
+            }
+            return saveNotificationToken(token).then(function(){
+              notifyBtn.textContent = '🔔 Notifications on';
+              setNotifyStatus("You'll get a notification when a new fish hits the leaderboard.");
+            });
+          });
+        });
+      }).catch(function(err){
+        console.warn('Notification setup failed:', err);
+        setNotifyStatus('Something went wrong turning on notifications.');
+        notifyBtn.disabled = false;
+      });
+    });
+  }
+  initNotifications();
 
   var raffleAmountEl = document.getElementById('raffleAmount');
   var lbEmptyEl = document.getElementById('leaderboardEmpty');
