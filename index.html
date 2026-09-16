@@ -1152,6 +1152,17 @@
   var CATEGORY_ORDER = ["Pickerel","Bass","Perch","Youth Pickerel","Youth Bass","Youth Perch"];
   function isYouthCat(cat){ return cat.indexOf('Youth') === 0; }
   function catFinishLimit(cat){ return isYouthCat(cat) ? 1 : 4; }
+  // No fish weighed in here should ever be over this — it's a fat-finger
+  // guard, not a real limit. Cold hands and gloves at the weigh station make
+  // typos easy (an extra digit turns 1.65 into 165), so anything above this
+  // gets a confirm-again prompt instead of silently saving.
+  var MAX_PLAUSIBLE_WEIGHT_LB = 10;
+  function confirmIfImplausibleWeight(name, weight){
+    if (weight <= MAX_PLAUSIBLE_WEIGHT_LB) return true;
+    return confirm('That\'s ' + weight + ' lb for ' + name + ' — no fish here should be over ' +
+      MAX_PLAUSIBLE_WEIGHT_LB + ' lb. Cold hands and gloves make typos easy, so double-check the number.\n\n' +
+      'Tap OK to log it anyway, or Cancel to go back and fix it.');
+  }
 
   // --- Push notifications: "Notify me" opts a visitor's device in to a push the
   // instant staff logs a new leaderboard fish, even if this tab isn't open. ---
@@ -1330,14 +1341,21 @@
     var name = row.querySelector('.admin-entry-name').value.trim();
     var weight = parseFloat(row.querySelector('.admin-entry-weight').value);
     var saveBtn = row.querySelector('.admin-entry-save');
-    if (!name || !isFinite(weight)) return;
+    if (!name || !isFinite(weight) || weight <= 0) {
+      alert('Enter an angler name and a weight greater than 0 before saving.');
+      return;
+    }
+    if (!confirmIfImplausibleWeight(name, weight)) return;
     if (saveBtn) { if (saveBtn.disabled) return; saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
-    db.collection('entries').doc(id).update({ angler: name, weight: weight }).then(function(){
-      // Same reasoning as addEntryFromRow: focus stays on the Save button,
-      // which is inside adminCatEditorEl, so the normal listener-driven
-      // re-render gets skipped. Force it so the rank/order actually updates.
-      renderAdminCatEditor();
-    }).catch(function(err){
+    // Blur (not a forced re-render) is what lets renderLeaderboard()'s "don't
+    // disrupt an in-progress edit" focus guard through cleanly. Firestore
+    // applies this write to the local cache almost instantly, well before the
+    // round-trip below resolves, so the normal onSnapshot-driven re-render
+    // already happens as soon as focus leaves the panel — forcing a second
+    // render from here would just risk landing a beat later and wiping out
+    // anything staff has since started typing elsewhere in the panel.
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    db.collection('entries').doc(id).update({ angler: name, weight: weight }).catch(function(err){
       console.error('save entry failed', err);
       if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
       alert('Could not save changes: ' + err.message);
@@ -1347,10 +1365,11 @@
   function deleteEntryRow(row){
     var id = row.dataset.id;
     var delBtn = row.querySelector('.admin-entry-del');
+    var name = row.querySelector('.admin-entry-name').value.trim() || 'this entry';
+    if (!confirm('Remove ' + name + ' from the leaderboard? This can\'t be undone.')) return;
     if (delBtn) { if (delBtn.disabled) return; delBtn.disabled = true; }
-    db.collection('entries').doc(id).delete().then(function(){
-      renderAdminCatEditor();
-    }).catch(function(err){
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    db.collection('entries').doc(id).delete().catch(function(err){
       console.error('delete entry failed', err);
       if (delBtn) delBtn.disabled = false;
       alert('Could not remove entry: ' + err.message);
@@ -1363,16 +1382,20 @@
     var addBtn = document.getElementById('newEntryAddBtn');
     var name = nameEl.value.trim();
     var weight = parseFloat(weightEl.value);
-    if (!name || !isFinite(weight)) return;
+    if (!name || !isFinite(weight) || weight <= 0) {
+      alert('Enter an angler name and a weight greater than 0 before adding.');
+      return;
+    }
+    if (!confirmIfImplausibleWeight(name, weight)) return;
     if (addBtn) { if (addBtn.disabled) return; addBtn.disabled = true; addBtn.textContent = 'Adding…'; }
+    // Move focus off whatever's inside the panel (the Add button, or the
+    // weight field if Add was triggered by Enter) so the focus guard above
+    // lets the normal, near-instant re-render through instead of forcing a
+    // second one from a .then() here that could clobber in-progress typing.
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     db.collection('entries').add({
       category: activeAdminCat, angler: name, weight: weight,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(function(){
-      // Force a refresh even though focus is still inside the panel (on the
-      // Add button) — otherwise renderLeaderboard()'s focus guard skips the
-      // re-render and the form looks like it did nothing.
-      renderAdminCatEditor();
     }).catch(function(err){
       console.error('add entry failed', err);
       if (addBtn) { addBtn.disabled = false; addBtn.textContent = 'Add'; }
@@ -1399,15 +1422,18 @@
         '<button type="button" class="admin-entry-del" title="Remove">&#10005;</button>' +
         '</div>';
     }).join('');
-    var addRow = '';
-    if (all.length < limit) {
-      addRow = '<div class="admin-entry-row admin-entry-add">' +
-        '<span class="rank-badge">+</span>' +
-        '<input type="text" id="newEntryAngler" class="admin-entry-name" placeholder="Angler name">' +
-        '<input type="number" step="0.01" id="newEntryWeight" class="admin-entry-weight" placeholder="Weight (lb)">' +
-        '<button type="button" class="btn btn-primary btn-sm" id="newEntryAddBtn">Add</button>' +
-        '</div>';
-    }
+    // Always show the add row, even once this category has already filled its
+    // ranked display slots. The entries collection itself isn't capped, only
+    // this ranked view is — gating the add row on all.length < limit meant
+    // that once a category hit its top-N cap there was no way to log any
+    // further catch in it at all, which will happen for real the first time
+    // a fifth angler (or, for a youth category, a second angler) weighs in.
+    var addRow = '<div class="admin-entry-row admin-entry-add">' +
+      '<span class="rank-badge">+</span>' +
+      '<input type="text" id="newEntryAngler" class="admin-entry-name" placeholder="Angler name">' +
+      '<input type="number" step="0.01" id="newEntryWeight" class="admin-entry-weight" placeholder="Weight (lb)">' +
+      '<button type="button" class="btn btn-primary btn-sm" id="newEntryAddBtn">Add</button>' +
+      '</div>';
     var overflowNote = overflow > 0
       ? '<p class="admin-cat-empty">'+overflow+' additional ' + (overflow===1?'entry':'entries') + ' recorded below the ' + (youth?'top spot':'4th place cutoff') + ' — delete one above to bring the next one in.</p>'
       : '';
@@ -1481,7 +1507,12 @@
     }).join('');
     if (isStaff) {
       Array.prototype.forEach.call(lbGroupsEl.querySelectorAll('.lb-del'), function(btn){
-        btn.addEventListener('click', function(){ db.collection('entries').doc(btn.dataset.id).delete(); });
+        btn.addEventListener('click', function(){
+          if (!confirm('Remove this entry from the leaderboard? This can\'t be undone.')) return;
+          db.collection('entries').doc(btn.dataset.id).delete().catch(function(err){
+            alert('Could not remove entry: ' + err.message);
+          });
+        });
       });
       if (adminCatEditorEl && !adminCatEditorEl.contains(document.activeElement)) renderAdminCatEditor();
     }
