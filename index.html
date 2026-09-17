@@ -42,10 +42,7 @@
     --frost-200:#DCEAF1;
     --frost-300:#C3DBE6;
     --ice-950:#0B2635;
-    --ice-800:#163B4F;
-    --ice-700:#1F4A61;
     --amber-500:#E07A1E;
-    --amber-600:#C4650F;
     --slate-600:#48657A;
     --snow:#FFFFFF;
 
@@ -57,7 +54,6 @@
     --border:var(--frost-300);
     --accent:var(--amber-500);
     --accent-text:#3A2205;
-    --accent-contrast:var(--snow);
     --accent2:#0E7C86;
     --accent2-bg:#E3F4F5;
     --hero-bg:var(--ice-950);
@@ -80,7 +76,6 @@
       --border:#204053;
       --accent:#F09A42;
       --accent-text:#2A1600;
-      --accent-contrast:#0A1D28;
       --accent2:#5ECFDA;
       --accent2-bg:rgba(94,207,218,.14);
       --hero-bg:#071620;
@@ -103,7 +98,6 @@
     --border:#204053;
     --accent:#F09A42;
     --accent-text:#2A1600;
-    --accent-contrast:#0A1D28;
     --accent2:#5ECFDA;
     --accent2-bg:rgba(94,207,218,.14);
     --hero-bg:#071620;
@@ -128,7 +122,6 @@
     --border:#000000;
     --accent:#C43E00;
     --accent-text:#FFFFFF;
-    --accent-contrast:#FFFFFF;
     --accent2:#005F63;
     --accent2-bg:#FFFFFF;
     --hero-bg:#000000;
@@ -343,7 +336,6 @@
      sits on the light page background, so its ghost buttons (Update Total, Save, Ceremony
      Sheet) need dark text here or the labels are nearly invisible. */
   .staff-panel .btn-ghost{color:var(--text);}
-  .hero-note{font-size:.85rem;color:var(--hero-muted);max-width:46ch;margin:0 0 44px;}
 
   /* ---------- ICE DIVIDER ---------- */
   .ice-divider{grid-column:1/-1;height:14px;position:relative;overflow:hidden;background:var(--hero-bg);}
@@ -507,13 +499,6 @@
   .volunteer-card p{margin:0;font-size:.85rem;color:var(--text-muted);}
   .volunteer-note{font-size:.85rem;color:var(--text-muted);margin:0;}
   .volunteer-note a{color:var(--accent2);font-weight:600;}
-  .menu-note{
-    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-    border:1px dashed var(--border);border-radius:10px;
-    padding:12px 16px;margin-bottom:14px;
-  }
-  .menu-note-label{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--accent2);}
-  .menu-note-items{font-size:.9rem;color:var(--text);font-weight:600;}
 
   /* FAQ */
   .faq{display:flex;flex-direction:column;gap:22px;}
@@ -662,6 +647,15 @@
       display:inline-flex;align-items:center;justify-content:center;
       border:1px solid var(--border);border-radius:50%;
     }
+    /* Same reasoning as .admin-entry-del above: these two delete controls are
+       also staff-only and just as capable of removing a live result or a
+       prize photo with one mis-tap, so they get the same enlarged target. */
+    .lb-del{
+      width:34px;height:34px;font-size:1.1rem;
+      display:inline-flex;align-items:center;justify-content:center;
+      border:1px solid var(--border);border-radius:50%;
+    }
+    .prize-photo-del{ width:34px;height:34px;font-size:1rem; }
   }
 
   ::selection{background:var(--accent);color:var(--accent-text);}
@@ -1099,32 +1093,42 @@
           <summary style="cursor:pointer;padding:14px;font-weight:700;font-size:.9rem;">Entry log — every fish ever logged, nothing is permanently deleted</summary>
           <div id="entryLog" style="padding:0 14px 14px;display:flex;flex-direction:column;gap:8px;"></div>
         </details>
-        <div class="admin-row">
-          <input type="number" step="1" id="raffleInput" placeholder="50/50 total ($)" style="width:11em;">
-          <button id="updateRaffleBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Update Total</button>
-        </div>
-        <div class="admin-row" style="flex-wrap:wrap;">
-          <span style="font-size:.82rem;color:var(--text-muted);width:100%;">Hourly drawing amounts ($) — leave a box blank to leave that hour as TBD:</span>
-          <input type="number" step="1" class="drawInput" data-slot="7am" placeholder="7 AM" style="width:6em;">
-          <input type="number" step="1" class="drawInput" data-slot="8am" placeholder="8 AM" style="width:6em;">
-          <input type="number" step="1" class="drawInput" data-slot="9am" placeholder="9 AM" style="width:6em;">
-          <input type="number" step="1" class="drawInput" data-slot="10am" placeholder="10 AM" style="width:6em;">
-          <input type="number" step="1" class="drawInput" data-slot="11am" placeholder="11 AM" style="width:6em;">
-          <input type="number" step="1" class="drawInput" data-slot="noon" placeholder="Noon" style="width:6em;">
-          <input type="number" step="1" class="drawInput" data-slot="1pm" placeholder="1 PM" style="width:6em;">
-          <input type="number" step="1" class="drawInput" data-slot="2pm" placeholder="2 PM" style="width:6em;">
-          <button id="updateDrawingsBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Save Drawing Amounts</button>
-        </div>
-        <div class="admin-row">
-          <select id="prizeRaffle">
-            <option value="ticket">Ticket Raffle</option>
-            <option value="kids">Kids' Raffle</option>
-          </select>
-          <input type="text" id="prizeName" placeholder="Prize name (optional)">
-          <input type="file" id="prizeFiles" accept="image/*" multiple>
-          <button id="uploadPrizeBtn" class="btn btn-primary btn-sm" type="button">Upload Prize Photo</button>
-        </div>
-        <div id="prizeUploadStatus" class="upload-status"></div>
+        <!-- Weighing fish is the thing staff do over and over on the ice, so the
+             category tabs/entry form and the entry log stay in view above. Raffle
+             total, hourly drawings, and prize photos only get touched a handful of
+             times all day, so they're tucked behind one collapsed section instead
+             of lengthening the scroll to Sign Out every time. -->
+        <details class="admin-cat-editor" style="padding:0;">
+          <summary style="cursor:pointer;padding:14px;font-weight:700;font-size:.9rem;">Raffle total, hourly drawings &amp; prize photos</summary>
+          <div style="padding:0 14px 14px;display:flex;flex-direction:column;gap:10px;">
+            <div class="admin-row" style="margin:0;">
+              <input type="number" step="1" id="raffleInput" placeholder="50/50 total ($)" style="width:11em;">
+              <button id="updateRaffleBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Update Total</button>
+            </div>
+            <div class="admin-row" style="flex-wrap:wrap;margin:0;">
+              <span style="font-size:.82rem;color:var(--text-muted);width:100%;">Hourly drawing amounts ($) — leave a box blank to leave that hour as TBD:</span>
+              <input type="number" step="1" class="drawInput" data-slot="7am" placeholder="7 AM" style="width:6em;">
+              <input type="number" step="1" class="drawInput" data-slot="8am" placeholder="8 AM" style="width:6em;">
+              <input type="number" step="1" class="drawInput" data-slot="9am" placeholder="9 AM" style="width:6em;">
+              <input type="number" step="1" class="drawInput" data-slot="10am" placeholder="10 AM" style="width:6em;">
+              <input type="number" step="1" class="drawInput" data-slot="11am" placeholder="11 AM" style="width:6em;">
+              <input type="number" step="1" class="drawInput" data-slot="noon" placeholder="Noon" style="width:6em;">
+              <input type="number" step="1" class="drawInput" data-slot="1pm" placeholder="1 PM" style="width:6em;">
+              <input type="number" step="1" class="drawInput" data-slot="2pm" placeholder="2 PM" style="width:6em;">
+              <button id="updateDrawingsBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Save Drawing Amounts</button>
+            </div>
+            <div class="admin-row" style="margin:0;">
+              <select id="prizeRaffle">
+                <option value="ticket">Ticket Raffle</option>
+                <option value="kids">Kids' Raffle</option>
+              </select>
+              <input type="text" id="prizeName" placeholder="Prize name (optional)">
+              <input type="file" id="prizeFiles" accept="image/*" multiple>
+              <button id="uploadPrizeBtn" class="btn btn-primary btn-sm" type="button">Upload Prize Photo</button>
+            </div>
+            <div id="prizeUploadStatus" class="upload-status"></div>
+          </div>
+        </details>
         <div class="admin-row">
           <a href="ceremony.html" class="btn btn-ghost btn-sm" style="border-color:var(--border);">Ceremony Sheet &rarr;</a>
           <button id="staffSignOut" class="staff-signout" type="button">Sign out</button>
@@ -1509,16 +1513,29 @@
 
   document.getElementById('staffSignOut').addEventListener('click', function(){ auth.signOut(); });
 
+  // True only for the very first onAuthStateChanged firing — the one that
+  // resolves whether a reload/relaunch landed on an already-signed-in staff
+  // session, as opposed to a firing caused by an explicit sign-in/out click.
+  var isInitialAuthCheck = true;
   auth.onAuthStateChanged(function(user){
     if (user) {
       staffLoginBox.hidden = true;
       staffAdminBox.hidden = false;
       staffToggle.hidden = true;
+      // Staff on the ice reload mid-derby (weak wifi, a backgrounded phone,
+      // an accidental refresh) and land back at the top of the whole public
+      // page every time — a long scroll to redo just to get back to logging
+      // fish. If the reload finds them still signed in, jump straight to the
+      // admin panel instead of making them scroll past ten sections again.
+      if (isInitialAuthCheck) {
+        setTimeout(function(){ staffAdminBox.scrollIntoView({block:'start'}); }, 0);
+      }
     } else {
       staffAdminBox.hidden = true;
       staffToggle.hidden = false;
       staffPassword.value = '';
     }
+    isInitialAuthCheck = false;
     renderLeaderboard(latestEntries);
     renderPrizes('ticket', latestTicketPrizes);
     renderPrizes('kids', latestKidsPrizes);
@@ -1686,18 +1703,43 @@
     var newAddBtn = document.getElementById('newEntryAddBtn');
     if (newAddBtn) {
       newAddBtn.addEventListener('click', addEntryFromRow);
-      Array.prototype.forEach.call(document.querySelectorAll('#newEntryAngler, #newEntryWeight'), function(input){
-        input.addEventListener('keydown', function(e){
+      var newAnglerEl = document.getElementById('newEntryAngler');
+      var newWeightEl = document.getElementById('newEntryWeight');
+      // Enter in the name field just hops to the weight field — submitting
+      // straight from a bare angler name would trip the "enter a weight"
+      // alert every time, which is an annoying interruption on the ice.
+      // Enter in the weight field still adds the entry, since by then both
+      // fields are normally filled in.
+      if (newAnglerEl) {
+        newAnglerEl.setAttribute('enterkeyhint', 'next');
+        newAnglerEl.addEventListener('keydown', function(e){
+          if (e.key === 'Enter') { e.preventDefault(); if (newWeightEl) newWeightEl.focus(); }
+        });
+      }
+      if (newWeightEl) {
+        newWeightEl.setAttribute('enterkeyhint', 'done');
+        newWeightEl.addEventListener('keydown', function(e){
           if (e.key === 'Enter') { e.preventDefault(); addEntryFromRow(); }
         });
-      });
+      }
     }
   }
 
   function updateRaffleTotal(){
-    var val = parseFloat(document.getElementById('raffleInput').value);
+    var input = document.getElementById('raffleInput');
+    var btn = document.getElementById('updateRaffleBtn');
+    var val = parseFloat(input.value);
     if (!isFinite(val)) return;
-    db.collection('meta').doc('raffle').set({ total: val }, { merge: true });
+    if (btn.disabled) return;
+    btn.disabled = true; btn.textContent = 'Saving…';
+    db.collection('meta').doc('raffle').set({ total: val }, { merge: true }).then(function(){
+      btn.disabled = false; btn.textContent = 'Update Total';
+      input.value = '';
+    }).catch(function(err){
+      console.error('raffle total update failed', err);
+      btn.disabled = false; btn.textContent = 'Update Total';
+      alert('Could not update the 50/50 total: ' + err.message);
+    });
   }
   document.getElementById('updateRaffleBtn').addEventListener('click', updateRaffleTotal);
   document.getElementById('raffleInput').addEventListener('keydown', function(e){
@@ -1710,6 +1752,8 @@
   // boxes are left alone rather than clearing whatever was saved before.
   var drawSlots = ['7am','8am','9am','10am','11am','noon','1pm','2pm'];
   function updateDrawings(){
+    var btn = document.getElementById('updateDrawingsBtn');
+    if (btn.disabled) return;
     var updates = {};
     var any = false;
     drawSlots.forEach(function(slot){
@@ -1718,8 +1762,15 @@
       if (isFinite(val)) { updates[slot] = val; any = true; }
     });
     if (!any) return;
-    db.collection('meta').doc('hourlyDrawings').set(updates, { merge: true });
-    Array.prototype.forEach.call(document.querySelectorAll('.drawInput'), function(input){ input.value = ''; });
+    btn.disabled = true; btn.textContent = 'Saving…';
+    db.collection('meta').doc('hourlyDrawings').set(updates, { merge: true }).then(function(){
+      btn.disabled = false; btn.textContent = 'Save Drawing Amounts';
+      Array.prototype.forEach.call(document.querySelectorAll('.drawInput'), function(input){ input.value = ''; });
+    }).catch(function(err){
+      console.error('hourly drawings update failed', err);
+      btn.disabled = false; btn.textContent = 'Save Drawing Amounts';
+      alert('Could not save drawing amounts: ' + err.message);
+    });
   }
   document.getElementById('updateDrawingsBtn').addEventListener('click', updateDrawings);
   Array.prototype.forEach.call(document.querySelectorAll('.drawInput'), function(input){
