@@ -890,14 +890,14 @@
 
     <div class="block-kicker" style="margin-top:28px;">Hourly Cash Drawings</div>
     <div class="logistics-grid" style="grid-template-columns:repeat(auto-fill,minmax(90px,1fr));margin-top:12px;">
-      <div class="logi-card"><h4>7 AM</h4><p>$150</p></div>
-      <div class="logi-card"><h4>8 AM</h4><p>$50</p></div>
-      <div class="logi-card"><h4>9 AM</h4><p>$50</p></div>
-      <div class="logi-card"><h4>10 AM</h4><p>$50</p></div>
-      <div class="logi-card"><h4>11 AM</h4><p>$50</p></div>
-      <div class="logi-card"><h4>Noon</h4><p>$150</p></div>
-      <div class="logi-card"><h4>1 PM</h4><p>$50</p></div>
-      <div class="logi-card"><h4>2 PM</h4><p>$50</p></div>
+      <div class="logi-card"><h4>7 AM</h4><p id="draw-7am">TBD</p></div>
+      <div class="logi-card"><h4>8 AM</h4><p id="draw-8am">TBD</p></div>
+      <div class="logi-card"><h4>9 AM</h4><p id="draw-9am">TBD</p></div>
+      <div class="logi-card"><h4>10 AM</h4><p id="draw-10am">TBD</p></div>
+      <div class="logi-card"><h4>11 AM</h4><p id="draw-11am">TBD</p></div>
+      <div class="logi-card"><h4>Noon</h4><p id="draw-noon">TBD</p></div>
+      <div class="logi-card"><h4>1 PM</h4><p id="draw-1pm">TBD</p></div>
+      <div class="logi-card"><h4>2 PM</h4><p id="draw-2pm">TBD</p></div>
     </div>
 
     <div class="logistics-grid">
@@ -1102,6 +1102,18 @@
         <div class="admin-row">
           <input type="number" step="1" id="raffleInput" placeholder="50/50 total ($)" style="width:11em;">
           <button id="updateRaffleBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Update Total</button>
+        </div>
+        <div class="admin-row" style="flex-wrap:wrap;">
+          <span style="font-size:.82rem;color:var(--text-muted);width:100%;">Hourly drawing amounts ($) — leave a box blank to leave that hour as TBD:</span>
+          <input type="number" step="1" class="drawInput" data-slot="7am" placeholder="7 AM" style="width:6em;">
+          <input type="number" step="1" class="drawInput" data-slot="8am" placeholder="8 AM" style="width:6em;">
+          <input type="number" step="1" class="drawInput" data-slot="9am" placeholder="9 AM" style="width:6em;">
+          <input type="number" step="1" class="drawInput" data-slot="10am" placeholder="10 AM" style="width:6em;">
+          <input type="number" step="1" class="drawInput" data-slot="11am" placeholder="11 AM" style="width:6em;">
+          <input type="number" step="1" class="drawInput" data-slot="noon" placeholder="Noon" style="width:6em;">
+          <input type="number" step="1" class="drawInput" data-slot="1pm" placeholder="1 PM" style="width:6em;">
+          <input type="number" step="1" class="drawInput" data-slot="2pm" placeholder="2 PM" style="width:6em;">
+          <button id="updateDrawingsBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Save Drawing Amounts</button>
         </div>
         <div class="admin-row">
           <select id="prizeRaffle">
@@ -1692,6 +1704,30 @@
     if (e.key === 'Enter') { e.preventDefault(); updateRaffleTotal(); }
   });
 
+  // Hourly cash drawing amounts. Each slot shows "TBD" on the public page
+  // until staff fills in a dollar figure here (the payouts can depend on
+  // how many entries come in, so they aren't fixed in advance). Blank
+  // boxes are left alone rather than clearing whatever was saved before.
+  var drawSlots = ['7am','8am','9am','10am','11am','noon','1pm','2pm'];
+  function updateDrawings(){
+    var updates = {};
+    var any = false;
+    drawSlots.forEach(function(slot){
+      var input = document.querySelector('.drawInput[data-slot="' + slot + '"]');
+      var val = parseFloat(input.value);
+      if (isFinite(val)) { updates[slot] = val; any = true; }
+    });
+    if (!any) return;
+    db.collection('meta').doc('hourlyDrawings').set(updates, { merge: true });
+    Array.prototype.forEach.call(document.querySelectorAll('.drawInput'), function(input){ input.value = ''; });
+  }
+  document.getElementById('updateDrawingsBtn').addEventListener('click', updateDrawings);
+  Array.prototype.forEach.call(document.querySelectorAll('.drawInput'), function(input){
+    input.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') { e.preventDefault(); updateDrawings(); }
+    });
+  });
+
   var latestEntries = [];
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, function(c){
@@ -1865,6 +1901,16 @@
     var total = (doc.exists && typeof doc.data().total === 'number') ? doc.data().total : 0;
     raffleAmountEl.textContent = '$' + total.toLocaleString();
   }, function(err){ console.error('raffle listen error', err); });
+
+  db.collection('meta').doc('hourlyDrawings').onSnapshot(function(doc){
+    var data = (doc.exists && doc.data()) || {};
+    drawSlots.forEach(function(slot){
+      var el = document.getElementById('draw-' + slot);
+      if (!el) return;
+      var val = data[slot];
+      el.textContent = (typeof val === 'number') ? ('$' + val.toLocaleString()) : 'TBD';
+    });
+  }, function(err){ console.error('hourly drawings listen error', err); });
 
   function resizeImage(file){
     return new Promise(function(resolve, reject){
