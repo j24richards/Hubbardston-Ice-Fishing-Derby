@@ -658,7 +658,47 @@
     .prize-photo-del{ width:34px;height:34px;font-size:1rem; }
   }
 
-  ::selection{background:var(--accent);color:var(--accent-text);}
+  /* ---------- DERBY DAY WEATHER ---------- */
+section.block[hidden]{display:none;}
+.wx-main{
+display:flex;align-items:center;gap:18px;
+background:var(--bg-card);border:1px solid var(--border);border-radius:12px;
+padding:18px 20px;box-shadow:var(--shadow);margin-bottom:14px;
+}
+.wx-icon{font-size:2.8rem;line-height:1;flex:none;}
+.wx-temp{font-size:1.9rem;font-weight:700;line-height:1.1;}
+.wx-temp small{font-size:.95rem;font-weight:500;color:var(--text-muted);margin-left:6px;}
+.wx-cond{color:var(--text-muted);font-size:.92rem;margin-top:4px;line-height:1.45;}
+.wx-hours{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px;margin-bottom:16px;}
+.wx-hour{background:var(--bg-sunken);border-radius:12px;padding:12px 14px;}
+.wx-hour-time{font-weight:700;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);}
+.wx-hour-note{font-size:.72rem;font-weight:700;color:var(--accent);min-height:1.1em;}
+.wx-hour-temp{font-size:1.3rem;font-weight:700;margin:6px 0 4px;}
+.wx-hour-meta{font-size:.8rem;color:var(--text-muted);line-height:1.55;}
+.wx-notes{list-style:none;margin:0 0 14px;padding:0;display:flex;flex-direction:column;gap:8px;}
+.wx-notes li{
+background:var(--accent2-bg);color:var(--accent2);font-weight:600;
+border-radius:10px;padding:10px 14px;font-size:.9rem;line-height:1.45;
+}
+.wx-wait{margin:0 0 16px;color:var(--text);font-size:.98rem;line-height:1.55;max-width:62ch;}
+.wx-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px;}
+.wx-stat{background:var(--bg-sunken);border-radius:12px;padding:14px 16px;}
+.wx-stat-val{font-size:1.5rem;font-weight:700;line-height:1.1;}
+.wx-stat-lbl{font-size:.78rem;color:var(--text-muted);margin-top:4px;line-height:1.4;}
+.wx-fine{color:var(--text-muted);font-size:.78rem;line-height:1.6;margin:0;}
+.wx-fine a, .wx-wait a{
+color:var(--accent2);font-weight:600;text-decoration:underline;text-underline-offset:2px;
+display:inline-block;padding:7px 4px;margin:-7px -4px;
+}
+html[data-outdoor="true"] .wx-main{border-width:2px;}
+html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
+@media (max-width:640px){
+.wx-main{padding:16px;gap:14px;}
+.wx-icon{font-size:2.3rem;}
+.wx-temp{font-size:1.6rem;}
+}
+
+::selection{background:var(--accent);color:var(--accent-text);}
 </style>
 </head>
 <body>
@@ -846,6 +886,18 @@
       <li><span class="rule-num">09</span><span>Final weigh-in cutoff is 2:30 PM. If you're not in the weigh-in line by then, your fish can't be weighed.</span></li>
       <li><span class="rule-num">10</span><span>Please respect the pond: carry in, carry out, and leave no trash behind. No fires or motorized vehicles are permitted on the ice.</span></li>
     </ol>
+  </section>
+
+  <section class="block" id="weather">
+    <div class="block-head">
+      <div class="block-kicker">Dress for It</div>
+      <h2 class="block-title">Derby Day Weather</h2>
+      <p class="block-desc" id="wxDesc">The forecast for derby morning shows up here as the date gets close.</p>
+    </div>
+    <div id="wxBody" aria-live="polite">
+      <p class="wx-fine">Loading&hellip;</p>
+      <noscript><p class="wx-wait">See the <a href="https://forecast.weather.gov/MapClick.php?lat=42.4825&amp;lon=-72.0028" target="_blank" rel="noopener">National Weather Service forecast</a> for Hubbardston.</p></noscript>
+    </div>
   </section>
 
   <section class="block" id="logistics">
@@ -1220,6 +1272,291 @@
     }
     tick();
     setInterval(tick, 1000);
+  })();
+</script>
+
+<script>
+  /* Derby Day Weather. Data from Open-Meteo.com (free, no key). Three states:
+     - more than 15 days out: no forecast exists yet, so show what this week of
+       February has usually looked like (last 10 winters, from Open-Meteo's archive)
+     - 0-15 days out: hourly forecast from check-in to lines out
+     - after derby day: the whole section hides itself */
+  (function(){
+    var section = document.getElementById('weather');
+    var body = document.getElementById('wxBody');
+    var desc = document.getElementById('wxDesc');
+    if(!section || !body) return;
+
+    var LAT = 42.47, LON = -72.00;
+    var DERBY = '2027-02-20';
+    var FORECAST_REACH = 15;
+    var WINDOW = 7;
+    var NWS_URL = 'https://forecast.weather.gov/MapClick.php?lat=42.4825&lon=-72.0028';
+    var SLOTS = [
+      { h: 5,  label: '5 AM',  note: 'Check-in' },
+      { h: 7,  label: '7 AM',  note: 'Lines in' },
+      { h: 9,  label: '9 AM',  note: '' },
+      { h: 11, label: '11 AM', note: '' },
+      { h: 13, label: '1 PM',  note: '' },
+      { h: 14, label: '2 PM',  note: 'Lines out' }
+    ];
+    var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var NWS_LINK = '<a href="' + NWS_URL + '" target="_blank" rel="noopener">National Weather Service forecast</a>';
+
+    function pad2(n){ return n < 10 ? '0' + n : '' + n; }
+    function ymd(y, m, d){ return y + '-' + pad2(m) + '-' + pad2(d); }
+    function parseYMD(s){ var p = s.split('-'); return { y: +p[0], m: +p[1], d: +p[2] }; }
+    function utcDay(s){ var o = parseYMD(s); return Date.UTC(o.y, o.m - 1, o.d) / 86400000; }
+    function fromDay(n){
+      var dt = new Date(n * 86400000);
+      return ymd(dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate());
+    }
+    function prettyDate(s){ var o = parseYMD(s); return MONTHS[o.m - 1] + ' ' + o.d; }
+    function weekday(s){ return DAYS[new Date(utcDay(s) * 86400000).getUTCDay()]; }
+    function todayET(){
+      try{
+        var s = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+        if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      }catch(e){}
+      var n = new Date();
+      return ymd(n.getFullYear(), n.getMonth() + 1, n.getDate());
+    }
+    function fmtTime(iso){
+      var t = (iso || '').split('T')[1] || '';
+      var hh = parseInt(t.split(':')[0], 10);
+      var mm = t.split(':')[1] || '00';
+      if(isNaN(hh)) return '';
+      var h12 = hh % 12; if(h12 === 0) h12 = 12;
+      return h12 + ':' + mm + ' ' + (hh >= 12 ? 'PM' : 'AM');
+    }
+    function hourLabel(h){
+      var h12 = h % 12; if(h12 === 0) h12 = 12;
+      return h12 + ' ' + (h >= 12 ? 'PM' : 'AM');
+    }
+    function isNum(v){ return typeof v === 'number' && isFinite(v); }
+    function deg(v){ return isNum(v) ? Math.round(v) + '°' : '—'; }
+
+    function codeInfo(c){
+      if(c === 0) return { icon: '☀️', text: 'Clear' };
+      if(c === 1) return { icon: '🌤️', text: 'Mostly clear' };
+      if(c === 2) return { icon: '⛅', text: 'Partly cloudy' };
+      if(c === 3) return { icon: '☁️', text: 'Overcast' };
+      if(c === 45 || c === 48) return { icon: '🌫️', text: 'Fog' };
+      if(c >= 51 && c <= 55) return { icon: '🌦️', text: 'Drizzle' };
+      if(c === 56 || c === 57) return { icon: '🌧️', text: 'Freezing drizzle' };
+      if(c >= 61 && c <= 65) return { icon: '🌧️', text: c === 61 ? 'Light rain' : (c === 63 ? 'Rain' : 'Heavy rain') };
+      if(c === 66 || c === 67) return { icon: '🌧️', text: 'Freezing rain' };
+      if(c >= 71 && c <= 75) return { icon: c === 75 ? '❄️' : '🌨️', text: c === 71 ? 'Light snow' : (c === 73 ? 'Snow' : 'Heavy snow') };
+      if(c === 77) return { icon: '🌨️', text: 'Snow grains' };
+      if(c >= 80 && c <= 82) return { icon: '🌦️', text: 'Rain showers' };
+      if(c === 85 || c === 86) return { icon: '🌨️', text: 'Snow showers' };
+      if(c >= 95) return { icon: '⛈️', text: 'Thunderstorms' };
+      return { icon: '🌡️', text: 'Mixed conditions' };
+    }
+
+    function setBody(html){ body.innerHTML = html; }
+    function fineTail(){
+      return 'Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a>. ' +
+        'Also check the ' + NWS_LINK + '. Forecasts change, and if conditions look unsafe we&rsquo;ll post an update here about the thaw/rain date. ' +
+        'Ice safety is each angler&rsquo;s own responsibility.';
+    }
+    function cacheGet(store, key, maxAgeMs){
+      try{
+        var raw = window[store].getItem(key);
+        if(!raw) return null;
+        var o = JSON.parse(raw);
+        if(o && o.t && (Date.now() - o.t) < maxAgeMs) return o.v;
+      }catch(e){}
+      return null;
+    }
+    function cacheSet(store, key, value){
+      try{ window[store].setItem(key, JSON.stringify({ t: Date.now(), v: value })); }catch(e){}
+    }
+    function fetchJson(url){
+      if(typeof fetch !== 'function') return Promise.reject(new Error('no fetch'));
+      return fetch(url).then(function(r){
+        if(!r.ok) throw new Error('http ' + r.status);
+        return r.json();
+      });
+    }
+
+    /* ---------- forecast (within 15 days) ---------- */
+    function forecastUrl(){
+      return 'https://api.open-meteo.com/v1/forecast?latitude=' + LAT + '&longitude=' + LON +
+        '&start_date=' + DERBY + '&end_date=' + DERBY +
+        '&hourly=temperature_2m,apparent_temperature,precipitation_probability,wind_speed_10m,wind_gusts_10m,weather_code' +
+        '&daily=temperature_2m_max,temperature_2m_min,snowfall_sum,sunrise,sunset' +
+        '&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America%2FNew_York';
+    }
+    function buildForecast(j){
+      var hr = j && j.hourly, dy = j && j.daily;
+      if(!hr || !hr.time || !dy) throw new Error('bad forecast');
+      function at(arr, i){ return (arr && isNum(arr[i])) ? arr[i] : null; }
+      var slots = [], i, k;
+      for(k = 0; k < SLOTS.length; k++){
+        i = hr.time.indexOf(DERBY + 'T' + pad2(SLOTS[k].h) + ':00');
+        if(i < 0) continue;
+        slots.push({
+          label: SLOTS[k].label, note: SLOTS[k].note,
+          temp: at(hr.temperature_2m, i), feels: at(hr.apparent_temperature, i),
+          wind: at(hr.wind_speed_10m, i), gust: at(hr.wind_gusts_10m, i),
+          pop: at(hr.precipitation_probability, i), code: at(hr.weather_code, i)
+        });
+      }
+      if(!slots.length) throw new Error('no derby hours');
+      var m = { slots: slots, minFeels: null, minFeelsHour: null, maxTemp: null, maxGust: null, maxPop: null, worstCode: null };
+      for(var h = 5; h <= 15; h++){
+        i = hr.time.indexOf(DERBY + 'T' + pad2(h) + ':00');
+        if(i < 0) continue;
+        var f = at(hr.apparent_temperature, i), t = at(hr.temperature_2m, i);
+        var g = at(hr.wind_gusts_10m, i), p = at(hr.precipitation_probability, i), c = at(hr.weather_code, i);
+        if(f !== null && (m.minFeels === null || f < m.minFeels)){ m.minFeels = f; m.minFeelsHour = h; }
+        if(t !== null && (m.maxTemp === null || t > m.maxTemp)) m.maxTemp = t;
+        if(g !== null && (m.maxGust === null || g > m.maxGust)) m.maxGust = g;
+        if(p !== null && (m.maxPop === null || p > m.maxPop)) m.maxPop = p;
+        if(c !== null && (m.worstCode === null || c > m.worstCode)) m.worstCode = c;
+      }
+      m.high = at(dy.temperature_2m_max, 0);
+      m.low = at(dy.temperature_2m_min, 0);
+      m.snow = at(dy.snowfall_sum, 0);
+      m.sunrise = dy.sunrise && dy.sunrise[0] ? fmtTime(dy.sunrise[0]) : '';
+      m.sunset = dy.sunset && dy.sunset[0] ? fmtTime(dy.sunset[0]) : '';
+      return m;
+    }
+    function buildNotes(m){
+      var n = [];
+      if(m.minFeels !== null){
+        n.push('Coldest feels-like during the derby: ' + Math.round(m.minFeels) + '°F around ' + hourLabel(m.minFeelsHour) +
+          (m.minFeels <= 10 ? ' — bundle up and cover exposed skin.' : '.'));
+      }
+      if(m.maxGust !== null && m.maxGust >= 25){
+        n.push('Gusty: wind gusts up to ' + Math.round(m.maxGust) + ' mph out on the open ice.');
+      }
+      if(m.snow !== null && m.snow >= 0.1){
+        n.push('Snow in the forecast: about ' + (Math.round(m.snow * 10) / 10) + ' in.');
+      } else if(m.maxPop !== null && m.maxPop >= 40){
+        n.push(Math.round(m.maxPop) + '% chance of precipitation at some point during the day.');
+      }
+      if(m.maxTemp !== null && m.maxTemp >= 38){
+        n.push('Mild stretch ahead (up to ' + Math.round(m.maxTemp) + '°F). Warm spells soften ice, so watch this page for any update on the thaw date.');
+      }
+      return n;
+    }
+    function renderForecast(m){
+      var info = codeInfo(m.worstCode);
+      var cond = info.text;
+      if(m.sunrise && m.sunset) cond += ' &middot; Sunrise ' + m.sunrise + ' &middot; Sunset ' + m.sunset;
+      var html = '<div class="wx-main"><div class="wx-icon" aria-hidden="true">' + info.icon + '</div><div>' +
+        '<div class="wx-temp mono">' + deg(m.high) + '<small>High &middot; Low ' + deg(m.low) + '</small></div>' +
+        '<div class="wx-cond">' + cond + '</div></div></div>';
+      html += '<div class="wx-hours">';
+      for(var k = 0; k < m.slots.length; k++){
+        var s = m.slots[k], ci = s.code !== null ? codeInfo(s.code) : null;
+        var wind = s.wind !== null ? Math.round(s.wind) + ' mph' + (s.gust !== null ? ' (gusts ' + Math.round(s.gust) + ')' : '') : '—';
+        html += '<div class="wx-hour"><div class="wx-hour-time">' + s.label + '</div>' +
+          '<div class="wx-hour-note">' + (s.note || '&nbsp;') + '</div>' +
+          '<div class="wx-hour-temp mono">' + deg(s.temp) + (ci ? ' <span aria-hidden="true">' + ci.icon + '</span>' : '') + '</div>' +
+          '<div class="wx-hour-meta">Feels like ' + deg(s.feels) + '<br>Wind ' + wind + '<br>' + (s.pop !== null ? Math.round(s.pop) + '% precip' : '') + '</div></div>';
+      }
+      html += '</div>';
+      var notes = buildNotes(m);
+      if(notes.length){
+        html += '<ul class="wx-notes">';
+        for(var q = 0; q < notes.length; q++) html += '<li>' + notes[q] + '</li>';
+        html += '</ul>';
+      }
+      var now = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      html += '<p class="wx-fine">Forecast loaded at ' + now + '. ' + fineTail() + '</p>';
+      return html;
+    }
+    function showForecast(){
+      desc.textContent = 'Forecast for ' + weekday(DERBY) + ', ' + prettyDate(DERBY) + ' on Bent/Sawyer Pond, from check-in through lines out.';
+      var cached = cacheGet('sessionStorage', 'derbyWxForecast', 15 * 60 * 1000);
+      var p = cached ? Promise.resolve(cached) : fetchJson(forecastUrl()).then(function(j){ cacheSet('sessionStorage', 'derbyWxForecast', j); return j; });
+      p.then(function(j){ setBody(renderForecast(buildForecast(j))); })
+       .catch(function(){
+         setBody('<p class="wx-wait">The live forecast isn&rsquo;t loading right now. See the ' + NWS_LINK + ' for Hubbardston.</p>');
+       });
+    }
+
+    /* ---------- typical conditions (more than 15 days out) ---------- */
+    function windowEnd(y){
+      var d = parseYMD(DERBY);
+      return Date.UTC(y, d.m - 1, d.d) / 86400000 + WINDOW;
+    }
+    function typicalRange(today){
+      var d = parseYMD(DERBY), cur = parseYMD(today).y;
+      var y1 = utcDay(today) > windowEnd(cur) + 6 ? cur : cur - 1;
+      var y0 = y1 - 9;
+      var anchor0 = Date.UTC(y0, d.m - 1, d.d) / 86400000;
+      return { y0: y0, y1: y1, start: fromDay(anchor0 - WINDOW), end: fromDay(windowEnd(y1)) };
+    }
+    function archiveUrl(r){
+      return 'https://archive-api.open-meteo.com/v1/archive?latitude=' + LAT + '&longitude=' + LON +
+        '&start_date=' + r.start + '&end_date=' + r.end +
+        '&daily=temperature_2m_max,temperature_2m_min,snowfall_sum' +
+        '&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=America%2FNew_York';
+    }
+    function buildTypical(j, r){
+      var dy = j && j.daily;
+      if(!dy || !dy.time) throw new Error('bad archive');
+      var d = parseYMD(DERBY), n = 0, hi = 0, lo = 0, snow = 0, mild = 0;
+      for(var i = 0; i < dy.time.length; i++){
+        var o = parseYMD(dy.time[i]);
+        var diff = utcDay(dy.time[i]) - Date.UTC(o.y, d.m - 1, d.d) / 86400000;
+        if(Math.abs(diff) > WINDOW) continue;
+        if(!isNum(dy.temperature_2m_max[i]) || !isNum(dy.temperature_2m_min[i])) continue;
+        n++;
+        hi += dy.temperature_2m_max[i];
+        lo += dy.temperature_2m_min[i];
+        if(isNum(dy.snowfall_sum[i]) && dy.snowfall_sum[i] >= 0.1) snow++;
+        if(dy.temperature_2m_max[i] > 32) mild++;
+      }
+      if(n < 20) throw new Error('not enough history');
+      return {
+        hi: Math.round(hi / n), lo: Math.round(lo / n),
+        snowPct: Math.round(100 * snow / n), mildPct: Math.round(100 * mild / n),
+        y0: r.y0, y1: r.y1, n: n
+      };
+    }
+    function loadTypical(today){
+      var r = typicalRange(today);
+      var key = 'derbyWxTypical:' + DERBY + ':' + r.y0 + '-' + r.y1;
+      var cached = cacheGet('localStorage', key, 30 * 24 * 3600 * 1000);
+      if(cached) return Promise.resolve(cached);
+      return fetchJson(archiveUrl(r)).then(function(j){
+        var v = buildTypical(j, r);
+        cacheSet('localStorage', key, v);
+        return v;
+      });
+    }
+    function showPreview(today, daysUntil){
+      var opens = prettyDate(fromDay(utcDay(DERBY) - FORECAST_REACH));
+      desc.textContent = 'Derby day is ' + weekday(DERBY) + ', ' + prettyDate(DERBY) + ' (' + daysUntil + ' days away). Nobody can forecast that far out yet.';
+      var lead = '<p class="wx-wait">The hourly forecast for derby morning switches on here around <strong>' + opens +
+        '</strong>, about two weeks before the derby. Until then, here is what the week around derby day has usually looked like in Hubbardston.</p>';
+      setBody(lead + '<p class="wx-fine">Loading&hellip;</p>');
+      loadTypical(today).then(function(t){
+        var stats = '<div class="wx-stats">' +
+          '<div class="wx-stat"><div class="wx-stat-val mono">' + t.hi + '°F</div><div class="wx-stat-lbl">Typical high</div></div>' +
+          '<div class="wx-stat"><div class="wx-stat-val mono">' + t.lo + '°F</div><div class="wx-stat-lbl">Typical low</div></div>' +
+          '<div class="wx-stat"><div class="wx-stat-val mono">' + t.snowPct + '%</div><div class="wx-stat-lbl">of days with snow</div></div>' +
+          '<div class="wx-stat"><div class="wx-stat-val mono">' + t.mildPct + '%</div><div class="wx-stat-lbl">of days with a high above freezing</div></div>' +
+          '</div>';
+        var span = prettyDate(fromDay(utcDay(DERBY) - WINDOW)) + '&ndash;' + prettyDate(fromDay(utcDay(DERBY) + WINDOW));
+        setBody(lead + stats + '<p class="wx-fine">Averages for ' + span + ' (the week around derby day) over the winters of ' +
+          t.y0 + ' to ' + t.y1 + '. That is history, not a forecast. ' + fineTail() + '</p>');
+      }).catch(function(){
+        setBody(lead + '<p class="wx-fine">' + fineTail() + '</p>');
+      });
+    }
+
+    var today = todayET();
+    var daysUntil = utcDay(DERBY) - utcDay(today);
+    if(daysUntil < 0){ section.hidden = true; return; }
+    if(daysUntil <= FORECAST_REACH) showForecast();
+    else showPreview(today, daysUntil);
   })();
 </script>
 
