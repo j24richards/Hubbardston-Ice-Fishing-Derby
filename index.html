@@ -1133,7 +1133,7 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
     <div class="staff-panel">
       <button id="staffToggle" class="footer-login-link" type="button">Admin Login</button>
       <div id="staffLoginBox" class="staff-box" hidden>
-        <input type="password" id="staffPassword" placeholder="Staff password">
+        <input type="password" id="staffPassword" placeholder="Staff password" autocapitalize="off" autocorrect="off" spellcheck="false">
         <button id="staffSignIn" class="btn btn-primary btn-sm" type="button">Sign In</button>
         <span id="staffError" class="staff-error"></span>
       </div>
@@ -1838,11 +1838,40 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
   // password field — no need to find the (deliberately unlabeled) footer link.
   if (location.hash.toLowerCase() === '#login') openStaffLogin();
 
+  // Says what actually went wrong instead of always blaming the password —
+  // on a weak-signal pond a dropped connection used to look like a wrong password.
+  function staffSignInMessage(err){
+    var code = (err && err.code) || '';
+    if (code === 'auth/too-many-requests') return 'Too many tries. Wait a few minutes, then try again.';
+    if (code === 'auth/network-request-failed') return 'No connection. Check your signal and try again.';
+    if (code === 'auth/user-disabled') return 'The staff account is disabled.';
+    if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' ||
+        code === 'auth/user-not-found' || code === 'auth/invalid-login-credentials') {
+      return 'Wrong password. Check capital letters and spaces.';
+    }
+    return 'Sign-in failed' + (code ? ' (' + code + ')' : '') + '. Try again.';
+  }
+  function isBadCredential(err){
+    var code = (err && err.code) || '';
+    return code === 'auth/invalid-credential' || code === 'auth/wrong-password' ||
+           code === 'auth/user-not-found' || code === 'auth/invalid-login-credentials';
+  }
   function attemptStaffSignIn(){
     staffError.textContent = '';
     var pw = staffPassword.value;
-    auth.signInWithEmailAndPassword(STAFF_EMAIL, pw).catch(function(){
-      staffError.textContent = 'Wrong password.';
+    if (!pw) { staffError.textContent = 'Enter the staff password.'; return; }
+    auth.signInWithEmailAndPassword(STAFF_EMAIL, pw).catch(function(err){
+      // A stray space from a keyboard suggestion or autofill is a common slip:
+      // if the password as typed was rejected and trimming changes it, try the
+      // trimmed version once before giving up.
+      var trimmed = pw.trim();
+      if (isBadCredential(err) && trimmed && trimmed !== pw) {
+        return auth.signInWithEmailAndPassword(STAFF_EMAIL, trimmed);
+      }
+      throw err;
+    }).catch(function(err){
+      console.error('staff sign-in failed', err && err.code);
+      staffError.textContent = staffSignInMessage(err);
     });
   }
   document.getElementById('staffSignIn').addEventListener('click', attemptStaffSignIn);
@@ -2450,6 +2479,27 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
     renderPrizes('ticket', ticket);
     renderPrizes('kids', kids);
   }, function(err){ console.error('prizes listen error', err); });
+})();
+</script>
+<script>
+// Waze links. The plain https://waze.com/ul link relies on the phone handing it
+// to the Waze app, which Samsung Internet (and some other Android browsers)
+// often don't do — they land on Waze's "Don't have Waze yet?" page instead.
+// On Android, tapping a Waze link now asks Android to open the Waze app
+// directly; if Waze isn't installed it falls back to the normal web link.
+// Every other device keeps the normal link.
+(function(){
+  if (!/Android/i.test(navigator.userAgent)) return;
+  Array.prototype.forEach.call(document.querySelectorAll('a[href^="https://waze.com/ul"]'), function(a){
+    a.addEventListener('click', function(e){
+      var qs = a.getAttribute('href').split('?')[1] || '';
+      if (!qs) return;
+      e.preventDefault();
+      window.location.href = 'intent://?' + qs +
+        '#Intent;scheme=waze;package=com.waze;S.browser_fallback_url=' +
+        encodeURIComponent(a.href) + ';end';
+    });
+  });
 })();
 </script>
 </body>
