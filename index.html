@@ -1144,7 +1144,7 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
         <div id="adminCatTabs" class="admin-cat-tabs"></div>
         <div id="adminCatEditor" class="admin-cat-editor"></div>
         <details class="admin-cat-editor" style="padding:0;">
-          <summary style="cursor:pointer;padding:14px;font-weight:700;font-size:.9rem;">Entry log — every fish ever logged, nothing is permanently deleted</summary>
+          <summary style="cursor:pointer;padding:14px;font-weight:700;font-size:.9rem;">Entry log — every fish ever logged. Removed entries can be restored or deleted forever.</summary>
           <div id="entryLog" style="padding:0 14px 14px;display:flex;flex-direction:column;gap:8px;"></div>
         </details>
         <!-- Weighing fish is the thing staff do over and over on the ice, so the
@@ -2127,7 +2127,7 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
 
   function renderLeaderboard(entries){
     // latestEntries keeps EVERY entry ever logged, including removed ones —
-    // nothing is ever purged from Firestore by this app. "Removed" just means
+    // nothing is purged from Firestore unless staff use "Delete forever" in the entry log. "Removed" just means
     // an entry carries deleted:true/deletedAt and is filtered out of the
     // ranked views below; it still shows (with its timestamp) in the staff
     // entry log, and can be restored from there.
@@ -2184,7 +2184,7 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
   }, function(err){ console.error('leaderboard listen error', err); });
 
   // --- Staff-only entry log: every entry ever logged, in case of a mistake.
-  // Nothing is ever hard-deleted — "Remove" just flags an entry as removed
+  // "Remove" never hard-deletes — it just flags an entry as removed
   // (with a timestamp) so it drops off the ranked leaderboard; it still shows
   // up here and can be restored. Entries that don't make the top finishes
   // stay recorded here too, exactly as entered, with a created timestamp. ---
@@ -2202,6 +2202,38 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
       console.error('restore entry failed', err);
       if (btn) { btn.disabled = false; btn.textContent = 'Restore'; }
       alert('Could not restore entry: ' + err.message);
+    });
+  }
+
+  // Permanent delete. Only offered for entries that were already removed from
+  // the leaderboard (two deliberate steps), and always behind a confirm. This
+  // is the one place in the app that really erases an entry and its edit
+  // history from Firestore — meant for clearing out test catches so they
+  // don't get lumped in with real results later. It cannot be undone.
+  function deleteEntryForever(id, btn){
+    var entry = latestEntries.filter(function(e){ return e.id === id; })[0];
+    if (!entry || !entry.deleted) return;
+    if (!confirm('Delete forever?\n\n' + entry.angler + ' — ' + entry.weight + ' lb (' + entry.category + ')\n\nThis erases the entry and its edit history completely. It cannot be undone.')) return;
+    if (btn) { if (btn.disabled) return; btn.disabled = true; btn.textContent = 'Deleting…'; }
+    db.collection('entries').doc(id).delete().catch(function(err){
+      console.error('delete entry failed', err);
+      if (btn) { btn.disabled = false; btn.textContent = 'Delete forever'; }
+      alert('Could not delete entry: ' + err.message);
+    });
+  }
+
+  function deleteAllRemovedForever(btn){
+    var removed = latestEntries.filter(function(e){ return e.deleted; });
+    if (!removed.length) return;
+    var names = removed.map(function(e){ return e.angler + ' (' + e.weight + ' lb)'; }).join(', ');
+    if (!confirm('Delete forever all ' + removed.length + ' removed entries?\n\n' + names + '\n\nActive leaderboard entries are not touched. This cannot be undone.')) return;
+    if (btn) { if (btn.disabled) return; btn.disabled = true; btn.textContent = 'Deleting…'; }
+    var batch = db.batch();
+    removed.forEach(function(e){ batch.delete(db.collection('entries').doc(e.id)); });
+    batch.commit().catch(function(err){
+      console.error('bulk delete failed', err);
+      if (btn) { btn.disabled = false; btn.textContent = 'Delete all removed entries forever'; }
+      alert('Could not delete entries: ' + err.message);
     });
   }
 
@@ -2247,12 +2279,17 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
       el.innerHTML = '<p class="admin-cat-empty">No entries logged yet.</p>';
       return;
     }
-    el.innerHTML = all.map(function(e){
+    var removedCount = all.filter(function(e){ return e.deleted; }).length;
+    var bulkHtml = removedCount
+      ? '<div style="display:flex;justify-content:flex-end;"><button type="button" class="btn btn-ghost btn-sm entry-log-purge-all" style="border-color:var(--border);color:#c0392b;">Delete all removed entries forever</button></div>'
+      : '';
+    el.innerHTML = bulkHtml + all.map(function(e){
       var statusHtml;
       var historyHtml = '';
       if (e.deleted) {
         statusHtml = '<span style="color:var(--text-muted);">Removed ' + formatLogTime(e.deletedAt) + '</span>' +
-          '<button type="button" class="btn btn-ghost btn-sm entry-log-restore" data-id="' + e.id + '" style="border-color:var(--border);">Restore</button>';
+          '<button type="button" class="btn btn-ghost btn-sm entry-log-restore" data-id="' + e.id + '" style="border-color:var(--border);">Restore</button>' +
+          '<button type="button" class="btn btn-ghost btn-sm entry-log-purge" data-id="' + e.id + '" style="border-color:var(--border);color:#c0392b;">Delete forever</button>';
       } else {
         statusHtml = '<span style="color:var(--accent);">Active</span>';
         if (e.edits && e.edits.length) {
@@ -2281,6 +2318,12 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
     }).join('');
     Array.prototype.forEach.call(el.querySelectorAll('.entry-log-restore'), function(btn){
       btn.addEventListener('click', function(){ restoreEntry(btn.dataset.id, btn); });
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('.entry-log-purge'), function(btn){
+      btn.addEventListener('click', function(){ deleteEntryForever(btn.dataset.id, btn); });
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('.entry-log-purge-all'), function(btn){
+      btn.addEventListener('click', function(){ deleteAllRemovedForever(btn); });
     });
     Array.prototype.forEach.call(el.querySelectorAll('.entry-log-revert'), function(btn){
       btn.addEventListener('click', function(){ revertToHistoryEntry(btn.dataset.id, parseInt(btn.dataset.index, 10), btn); });
