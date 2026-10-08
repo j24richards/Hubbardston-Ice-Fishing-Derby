@@ -470,6 +470,33 @@
   .find-none{color:var(--text-muted);font-size:.9rem;}
   @media (max-width:380px){.cat-pay b{font-size:.85rem;}}
 
+
+  /* ---------- Round 2 additions ---------- */
+  .fg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;}
+  .fg-card{background:var(--bg-card);border:1px solid var(--border);border-top:3px solid var(--c);border-radius:12px;padding:18px;box-shadow:var(--shadow);}
+  .fg-card .fg-fish{width:150px;height:60px;display:block;color:var(--c);margin-bottom:8px;}
+  .fg-card h3{margin:0 0 4px;font-size:1.15rem;}
+  .fg-card .fg-tag{margin:0;color:var(--text-muted);font-size:.9rem;}
+  .fg-card ul{margin:10px 0 0;padding-left:1.1em;font-size:.92rem;line-height:1.5;}
+  .fg-min{display:inline-block;background:var(--bg-sunken);border-radius:999px;padding:3px 11px;font-size:.8rem;font-weight:700;margin-top:10px;}
+  .fg-card--pickerel{--c:var(--pickerel);}
+  .fg-card--bass{--c:var(--bass);}
+  .fg-card--perch{--c:var(--perch);}
+  .pond-map{margin:12px 0 0;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:10px;box-shadow:var(--shadow);}
+  .pond-map svg{width:100%;height:auto;display:block;border-radius:8px;}
+  .pond-map figcaption{margin:8px 4px 2px;color:var(--text-muted);font-size:.8rem;}
+  .map-legend{list-style:none;margin:14px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;font-size:.92rem;line-height:1.45;}
+  .map-legend li{display:flex;gap:10px;align-items:flex-start;}
+  .map-dot{flex:none;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;font-size:.82rem;display:grid;place-items:center;}
+  .map-dot--teal{background:var(--accent2);}
+  .dd-strip{margin-inline:-20px;background:var(--accent);color:var(--accent-text);}
+  .dd-inner{max-width:920px;margin:0 auto;padding:12px 20px;display:flex;flex-wrap:wrap;gap:6px 22px;align-items:center;}
+  .dd-title{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.04em;line-height:1;}
+  .dd-line{font-weight:700;font-size:.95rem;flex:1 1 14em;}
+  .dd-pot{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:.9rem;}
+  .dd-links{display:flex;gap:8px;}
+  .dd-links a{background:var(--accent-text);color:#fff;text-decoration:none;font-weight:700;font-size:.82rem;padding:7px 14px;border-radius:999px;}
+
   /* Timeline */
   .timeline{display:flex;flex-direction:column;}
   .tl-row{
@@ -1004,6 +1031,39 @@ details.faq-item>:not(summary){margin-bottom:16px;}
     </div>
   </section>
 
+
+  <section class="block" id="fish-guide">
+    <div class="block-head">
+      <div class="block-kicker">Know Your Catch</div>
+      <h2 class="block-title">Kids&rsquo; Fish Guide</h2>
+      <p class="block-desc">Three kinds of fish count in the derby. Here&rsquo;s how to tell them apart &mdash; and how big they have to be.</p>
+    </div>
+    <div class="fg-grid">
+      <div class="fg-card fg-card--pickerel">
+        <svg class="fg-fish" aria-hidden="true"><use href="#fish-pickerel"/></svg>
+        <h3>Pickerel</h3>
+        <p class="fg-tag">Long, skinny, and toothy.</p>
+        <ul><li>Green sides with dark <b>chain-link</b> marks</li><li>Long, flat snout like a duck bill</li><li>Sharp teeth &mdash; use pliers, not fingers!</li></ul>
+        <span class="fg-min">Must be 16&Prime; or longer</span>
+      </div>
+      <div class="fg-card fg-card--bass">
+        <svg class="fg-fish" aria-hidden="true"><use href="#fish-bass"/></svg>
+        <h3>Bass</h3>
+        <p class="fg-tag">Big mouth, big fight.</p>
+        <ul><li>Green back with a dark stripe down the side</li><li>Mouth reaches back past the eye</li><li>Two joined fins along its back</li></ul>
+        <span class="fg-min">Must be 14&Prime; or longer</span>
+      </div>
+      <div class="fg-card fg-card--perch">
+        <svg class="fg-fish" aria-hidden="true"><use href="#fish-perch"/></svg>
+        <h3>Yellow Perch</h3>
+        <p class="fg-tag">Small, golden, and a common catch.</p>
+        <ul><li>Gold-yellow with dark <b>tiger stripes</b></li><li>Spiky fin on its back &mdash; careful!</li><li>Orange-ish fins on the bottom</li></ul>
+        <span class="fg-min">Must be 8&Prime; or longer</span>
+      </div>
+    </div>
+    <p class="note"><b>How to measure:</b> lay the fish flat, from the tip of its mouth to the tip of its tail. <b>Keep it alive</b> in a bucket until weigh-in &mdash; dead fish can&rsquo;t be weighed. Kids 12 &amp; under: your biggest fish of each kind can win donated gear!</p>
+  </section>
+
   <section class="block" id="weather">
     <div class="block-head">
       <div class="block-kicker">Dress for It</div>
@@ -1050,6 +1110,37 @@ details.faq-item>:not(summary){margin-bottom:16px;}
         <div><div class="tl-label">Awards ceremony</div><div class="tl-sub">Prizes by category, awarded back at the club</div></div>
       </div>
     </div>
+
+    <div class="block-kicker" style="margin-top:28px;">Finding Your Way</div>
+    <figure class="pond-map">
+      <svg viewBox="0 0 640 400" role="img" aria-labelledby="mapTitle">
+        <title id="mapTitle">Sketch map of the derby site: parking across Route 68, check-in tents and porta-potty at the entrance to the ice, and the official scale in the middle of the pond.</title>
+        <rect width="640" height="400" fill="#EEF5F9"/>
+        <path d="M70 150 C80 60 230 30 330 50 C450 70 560 60 585 140 C610 220 540 300 430 318 C330 335 250 300 170 305 C90 310 55 240 70 150Z" fill="#DCEAF1" stroke="#9FC3D6" stroke-width="3"/>
+        <text x="330" y="100" text-anchor="middle" font-size="15" fill="#48657A" font-weight="700" letter-spacing="2">BENT / SAWYER POND</text>
+        <path d="M200 120 C230 90 420 85 470 125 C500 180 450 250 380 262 C300 275 220 250 200 190Z" fill="none" stroke="#E07A1E" stroke-width="2.5" stroke-dasharray="8 6"/>
+        <text x="330" y="140" text-anchor="middle" font-size="12" fill="#B35A0E">marked derby area (approx.)</text>
+        <rect x="0" y="352" width="640" height="48" fill="#C9D3D9"/>
+        <line x1="0" y1="376" x2="640" y2="376" stroke="#fff" stroke-width="3" stroke-dasharray="18 14"/>
+        <text x="200" y="368" text-anchor="middle" font-size="12" fill="#48657A" font-weight="700">ROUTE 68</text>
+        <rect x="395" y="384" width="190" height="14" rx="3" fill="#E4E0D4"/>
+        <text x="490" y="395" text-anchor="middle" font-size="10" fill="#6B6452" font-weight="700">RIETTA RANCH PARKING</text>
+        <defs><marker id="mapArrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8Z" fill="#E07A1E"/></marker></defs>
+        <path d="M490 382 L490 340" stroke="#E07A1E" stroke-width="2.5" marker-end="url(#mapArrow)"/>
+        <circle cx="490" cy="326" r="13" fill="#E07A1E"/><text x="490" y="331" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">1</text>
+        <circle cx="440" cy="296" r="13" fill="#E07A1E"/><text x="440" y="301" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">2</text>
+        <circle cx="535" cy="296" r="13" fill="#E07A1E"/><text x="535" y="301" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">3</text>
+        <path d="M330 187 L330 150" stroke="#0E7C86" stroke-width="2"/><path d="M330 150 L352 156 L330 164Z" fill="#B22234"/>
+        <circle cx="330" cy="200" r="13" fill="#0E7C86"/><text x="330" y="205" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">4</text>
+      </svg>
+      <figcaption>Sketch map, not to scale &mdash; look for the signs and the bass flag.</figcaption>
+    </figure>
+    <ol class="map-legend">
+      <li><span class="map-dot">1</span><span><b>Park &amp; walk onto the ice</b> &mdash; park across Rt 68 at Rietta Ranch and follow the signs.</span></li>
+      <li><span class="map-dot">2</span><span><b>Check-in &amp; raffle tents</b> &mdash; open 5:30 AM at the edge of the ice.</span></li>
+      <li><span class="map-dot">3</span><span><b>Porta-potty</b> &mdash; by the registration tents.</span></li>
+      <li><span class="map-dot map-dot--teal">4</span><span><b>Official scale</b> &mdash; middle of the pond, under the bass flag. Weigh-in closes 2:30 PM.</span></li>
+    </ol>
 
     <div class="block-kicker" style="margin-top:28px;">Hourly Cash Drawings</div>
     <p id="drawNote" class="draw-note">Cash drawings run every hour from 7 AM to 2 PM &mdash; amounts will be posted here.</p>
@@ -2916,6 +3007,60 @@ details.faq-item>:not(summary){margin-bottom:16px;}
     while (item.firstChild) d.appendChild(item.firstChild);
     item.parentNode.replaceChild(d, item);
   });
+})();
+</script>
+<script>
+// Derby-day mode. Only on Sat Feb 20, 2027 (Eastern time): adds a strip under
+// the hero with the next milestone and the pot, points the main button at the
+// live leaderboard, and moves Schedule above Prizes. Any other day, nothing changes.
+(function(){
+  var DERBY = '2027-02-20';
+  var today = '';
+  try { today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' }); } catch(e){}
+  if (today !== DERBY) return;
+  document.documentElement.classList.add('derby-day');
+
+  var btn = document.querySelector('.hero-cta .btn-primary');
+  if (btn) { btn.textContent = 'Live Leaderboard'; btn.setAttribute('href', '#live'); }
+
+  var nav = document.querySelector('.jump-nav');
+  var strip = document.createElement('div');
+  strip.className = 'dd-strip';
+  strip.id = 'ddStrip';
+  strip.innerHTML = '<div class="dd-inner"><span class="dd-title">Derby Day!</span><span class="dd-line" id="ddLine" aria-live="polite"></span><span class="dd-pot" id="ddPot"></span><span class="dd-links"><a href="#live">Leaderboard</a><a href="#logistics">Schedule</a></span></div>';
+  if (nav && nav.parentNode) nav.parentNode.insertBefore(strip, nav);
+
+  var prizes = document.getElementById('prizes'), logistics = document.getElementById('logistics');
+  if (prizes && logistics && prizes.parentNode) prizes.parentNode.insertBefore(logistics, prizes);
+  if (nav) {
+    var linkP = nav.querySelector('a[href="#prizes"]'), linkS = nav.querySelector('a[href="#logistics"]');
+    if (linkP && linkS) linkP.parentNode.insertBefore(linkS, linkP);
+  }
+
+  function etSeconds(){
+    var parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }).formatToParts(new Date());
+    var v = {}; parts.forEach(function(p){ v[p.type] = parseInt(p.value, 10); });
+    return (v.hour % 24) * 3600 + v.minute * 60 + v.second;
+  }
+  function span(sec){
+    var h = Math.floor(sec / 3600), m = Math.ceil((sec % 3600) / 60);
+    if (m === 60) { h += 1; m = 0; }
+    return h > 0 ? h + 'h ' + m + 'm' : m + ' min';
+  }
+  var lineEl = document.getElementById('ddLine'), potEl = document.getElementById('ddPot');
+  function update(){
+    var now = etSeconds(), t;
+    if ((t = 5.5 * 3600 - now) > 0) t = 'Check-in opens at 5:30 AM (' + span(t) + ')';
+    else if ((t = 7 * 3600 - now) > 0) t = 'Lines in at 7:00 AM (' + span(t) + ')';
+    else if ((t = 14 * 3600 - now) > 0) t = 'Lines out at 2:00 PM (' + span(t) + ')';
+    else if ((t = 14.5 * 3600 - now) > 0) t = 'Weigh-in closes in ' + span(t);
+    else t = 'Weigh-in is closed — awards back at the club';
+    lineEl.textContent = t;
+    var pot = document.getElementById('raffleAmount');
+    potEl.textContent = (pot && /^\$/.test(pot.textContent)) ? '50/50 pot: ' + pot.textContent : '';
+  }
+  update();
+  setInterval(update, 30000);
 })();
 </script>
 </body>
