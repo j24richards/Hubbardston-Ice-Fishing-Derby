@@ -700,9 +700,32 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
 }
 
 ::selection{background:var(--accent);color:var(--accent-text);}
+
+/* ---- Status banner, jump menu, leaderboard status, FAQ accordions ---- */
+.status-banner{margin-inline:-20px;background:var(--accent);color:var(--accent-text);text-align:center;padding:10px 16px;font-weight:700;font-size:.98rem;line-height:1.35;}
+.status-banner[hidden]{display:none;}
+.jump-nav{margin-inline:-20px;position:sticky;top:0;z-index:25;background:var(--bg);border-bottom:1px solid var(--border);}
+.jump-nav-inner{max-width:920px;margin:0 auto;display:flex;gap:8px;overflow-x:auto;padding:8px 20px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.jump-nav-inner::-webkit-scrollbar{display:none;}
+.jump-nav a{flex:0 0 auto;padding:7px 14px;border:1px solid var(--border);border-radius:999px;font-size:.84rem;font-weight:700;text-decoration:none;color:var(--text);background:var(--bg-card);white-space:nowrap;}
+.jump-nav a.is-active{border-color:var(--accent);color:var(--accent);}
+section.block{scroll-margin-top:58px;}
+.lb-status{margin:-8px 0 14px;font-size:.84rem;color:var(--text-muted);}
+.lb-status.is-offline{color:var(--accent);font-weight:700;}
+.lb-status .live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#3DBE6B;margin-right:6px;vertical-align:middle;}
+.faq{gap:0;}
+details.faq-item{border-bottom:1px solid var(--border);}
+details.faq-item>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 0;}
+details.faq-item>summary::-webkit-details-marker{display:none;}
+details.faq-item>summary h3{margin:0;}
+details.faq-item>summary::after{content:'+';font-size:1.4rem;font-weight:700;color:var(--accent);line-height:1;flex:0 0 auto;}
+details.faq-item[open]>summary::after{content:'\2212';}
+details.faq-item>:not(summary){margin-bottom:16px;}
 </style>
 </head>
 <body>
+
+<div id="statusBanner" class="status-banner" role="status" hidden></div>
 
 <div class="hero">
   <div class="hero-inner">
@@ -769,6 +792,17 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
   </div>
 </div>
 
+<nav class="jump-nav" aria-label="Jump to a section">
+  <div class="jump-nav-inner">
+    <a href="#live">Leaderboard</a>
+    <a href="#rules">Rules</a>
+    <a href="#logistics">Schedule</a>
+    <a href="#prizes">Prizes</a>
+    <a href="#raffle-prizes">Raffles</a>
+    <a href="#faq">FAQ</a>
+  </div>
+</nav>
+
 <div class="wrap">
 
   <section class="block" id="live">
@@ -782,6 +816,7 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
       </div>
     </div>
 
+    <p id="lbStatus" class="lb-status" aria-live="polite"></p>
     <div id="leaderboardEmpty" class="lb-empty">Leaderboard opens derby morning — check back Feb 20!</div>
     <div id="leaderboardGroups" class="lb-groups"></div>
   </section>
@@ -957,7 +992,7 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
     </div>
   </section>
 
-  <section class="block">
+  <section class="block" id="prizes">
     <div class="block-head">
       <div class="block-kicker">What You Could Win</div>
       <h2 class="block-title">Prizes</h2>
@@ -1000,17 +1035,14 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
       <p class="block-desc">This derby runs on donations from local businesses, not paid sponsorship packages — every business that chips in gets a name, a link to their site, and our thanks right here.</p>
     </div>
     <!--
-      When a business donates, swap one of the open tiles below for a filled one, e.g.:
+      When a business donates, add a filled tile like this above the open "Want to donate?" tile (one per donor):
       <a class="sponsor-slot sponsor-slot--filled" href="https://donor-website.com" target="_blank" rel="noopener">
         <span class="sponsor-tag">Local Sponsor</span>
         <span class="sponsor-name">Donor Business Name</span>
       </a>
     -->
     <div class="sponsor-open">
-      <a class="sponsor-slot" href="https://www.hubbardstonrodandgun.com/contact-us.html" target="_blank" rel="noopener">+ Donate &amp; Get Recognized</a>
-      <a class="sponsor-slot" href="https://www.hubbardstonrodandgun.com/contact-us.html" target="_blank" rel="noopener">+ Donate &amp; Get Recognized</a>
-      <a class="sponsor-slot" href="https://www.hubbardstonrodandgun.com/contact-us.html" target="_blank" rel="noopener">+ Donate &amp; Get Recognized</a>
-      <a class="sponsor-slot" href="https://www.hubbardstonrodandgun.com/contact-us.html" target="_blank" rel="noopener">+ Donate &amp; Get Recognized</a>
+      <a class="sponsor-slot" href="https://www.hubbardstonrodandgun.com/contact-us.html" target="_blank" rel="noopener">+ Want to donate? Contact the club &amp; get recognized here</a>
     </div>
   </section>
 
@@ -1064,7 +1096,7 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
     <p class="volunteer-note">Want to lend a hand next year? <a href="https://www.hubbardstonrodandgun.com/contact-us.html" target="_blank" rel="noopener">Let the club know</a> — we always need more hands.</p>
   </section>
 
-  <section class="block">
+  <section class="block" id="faq">
     <div class="block-head">
       <div class="block-kicker">Good To Know</div>
       <h2 class="block-title">FAQ</h2>
@@ -1150,7 +1182,7 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
         <div id="adminCatTabs" class="admin-cat-tabs"></div>
         <div id="adminCatEditor" class="admin-cat-editor"></div>
         <details class="admin-cat-editor" style="padding:0;">
-          <summary style="cursor:pointer;padding:14px;font-weight:700;font-size:.9rem;">Entry log — every fish ever logged. Removed entries can be restored or deleted forever.</summary>
+          <summary style="cursor:pointer;padding:14px;font-weight:700;font-size:.9rem;">Entry log — every fish ever logged. Active entries can be removed here; removed entries can be restored or deleted forever.</summary>
           <div id="entryLog" style="padding:0 14px 14px;display:flex;flex-direction:column;gap:8px;"></div>
         </details>
         <!-- Weighing fish is the thing staff do over and over on the ice, so the
@@ -1159,8 +1191,14 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
              times all day, so they're tucked behind one collapsed section instead
              of lengthening the scroll to Sign Out every time. -->
         <details class="admin-cat-editor" style="padding:0;">
-          <summary style="cursor:pointer;padding:14px;font-weight:700;font-size:.9rem;">Raffle total, hourly drawings &amp; prize photos</summary>
+          <summary style="cursor:pointer;padding:14px;font-weight:700;font-size:.9rem;">Status banner, raffle total, hourly drawings &amp; prize photos</summary>
           <div style="padding:0 14px 14px;display:flex;flex-direction:column;gap:10px;">
+            <div class="admin-row" style="flex-wrap:wrap;margin:0;">
+              <span style="font-size:.82rem;color:var(--text-muted);width:100%;">Status banner — one line shown at the very top of the public site (e.g. "Ice confirmed — derby is ON" or "Postponed to Feb 27"). Clear it to hide the banner:</span>
+              <input type="text" id="statusInput" maxlength="140" placeholder="Status message" style="flex:1;min-width:14em;">
+              <button id="saveStatusBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Show Banner</button>
+              <button id="clearStatusBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Clear</button>
+            </div>
             <div class="admin-row" style="margin:0;">
               <input type="number" step="1" id="raffleInput" placeholder="50/50 total ($)" style="width:11em;">
               <button id="updateRaffleBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Update Total</button>
@@ -2237,11 +2275,81 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
     }
   }
 
-  db.collection('entries').onSnapshot(function(snap){
-    var entries = [];
-    snap.forEach(function(doc){ entries.push(Object.assign({id:doc.id}, doc.data())); });
-    renderLeaderboard(entries);
+  // Leaderboard "Live / Offline" status line. On a pond with patchy signal,
+  // people should be able to tell whether they're looking at live results or
+  // the last results their phone saved.
+  var lbStatusEl = document.getElementById('lbStatus');
+  var lbLastChange = null, lbFromCache = false, lbCacheTimer = null, lbShowOffline = false;
+  function renderLbStatus(){
+    if (!lbStatusEl) return;
+    var offline = !navigator.onLine || lbShowOffline;
+    lbStatusEl.classList.toggle('is-offline', offline);
+    if (offline) {
+      lbStatusEl.textContent = 'Offline — showing the last results this phone loaded. Updates resume when you have signal.';
+    } else {
+      var t = lbLastChange ? lbLastChange.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}) : '';
+      lbStatusEl.innerHTML = '<span class="live-dot"></span>Live' + (t ? ' · last update ' + t : '');
+    }
+  }
+  window.addEventListener('online', renderLbStatus);
+  window.addEventListener('offline', renderLbStatus);
+  renderLbStatus();
+
+  var lbFirstSnapshot = true;
+  db.collection('entries').onSnapshot({ includeMetadataChanges: true }, function(snap){
+    // Connection state: results served from the phone's cache for more than a
+    // few seconds mean there's no live connection to the weigh station.
+    lbFromCache = !!snap.metadata.fromCache;
+    clearTimeout(lbCacheTimer);
+    if (lbFromCache) {
+      lbCacheTimer = setTimeout(function(){ lbShowOffline = true; renderLbStatus(); }, 4000);
+    } else {
+      lbShowOffline = false;
+    }
+    // Metadata-only callbacks (connection flips) shouldn't re-render the board.
+    var dataChanged = lbFirstSnapshot || snap.docChanges().length > 0;
+    if (dataChanged) {
+      if (!lbFirstSnapshot) lbLastChange = new Date();
+      lbFirstSnapshot = false;
+      var entries = [];
+      snap.forEach(function(doc){ entries.push(Object.assign({id:doc.id}, doc.data())); });
+      renderLeaderboard(entries);
+    }
+    renderLbStatus();
   }, function(err){ console.error('leaderboard listen error', err); });
+
+  // Status banner (staff-editable one-liner at the top of the page).
+  var statusBannerEl = document.getElementById('statusBanner');
+  var statusInputEl = document.getElementById('statusInput');
+  db.collection('meta').doc('status').onSnapshot(function(doc){
+    var t = (doc.exists && doc.data().text) ? String(doc.data().text).trim() : '';
+    statusBannerEl.textContent = t;
+    statusBannerEl.hidden = !t;
+    if (statusInputEl && document.activeElement !== statusInputEl) statusInputEl.value = t;
+  }, function(err){ console.error('status banner listen error', err); });
+
+  function saveStatusBanner(text, btn, label){
+    if (btn) { if (btn.disabled) return; btn.disabled = true; btn.textContent = 'Saving…'; }
+    db.collection('meta').doc('status').set({
+      text: text, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true }).then(function(){
+      if (btn) { btn.disabled = false; btn.textContent = label; }
+    }).catch(function(err){
+      console.error('status banner save failed', err);
+      if (btn) { btn.disabled = false; btn.textContent = label; }
+      alert('Could not update the status banner: ' + err.message);
+    });
+  }
+  document.getElementById('saveStatusBtn').addEventListener('click', function(){
+    saveStatusBanner(statusInputEl.value.trim(), this, 'Show Banner');
+  });
+  document.getElementById('clearStatusBtn').addEventListener('click', function(){
+    statusInputEl.value = '';
+    saveStatusBanner('', this, 'Clear');
+  });
+  statusInputEl.addEventListener('keydown', function(e){
+    if (e.key === 'Enter') { e.preventDefault(); saveStatusBanner(statusInputEl.value.trim(), document.getElementById('saveStatusBtn'), 'Show Banner'); }
+  });
 
   // --- Staff-only entry log: every entry ever logged, in case of a mistake.
   // "Remove" never hard-deletes — it just flags an entry as removed
@@ -2251,6 +2359,22 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
   function formatLogTime(ts){
     if (!ts || !ts.toDate) return 'saving…';
     return ts.toDate().toLocaleString(undefined, { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+  }
+
+  // Soft-remove an active entry from the leaderboard (same as the ✕ button) —
+  // it stays in this log as "Removed" and can then be restored or deleted forever.
+  function removeEntryFromLog(id, btn){
+    var entry = latestEntries.filter(function(e){ return e.id === id; })[0];
+    if (!entry || entry.deleted) return;
+    if (!confirm('Remove ' + entry.angler + ' (' + entry.weight + ' lb, ' + entry.category + ') from the leaderboard? It stays in this log and can be restored or deleted forever.')) return;
+    if (btn) { if (btn.disabled) return; btn.disabled = true; btn.textContent = 'Removing…'; }
+    db.collection('entries').doc(id).update({
+      deleted: true, deletedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(function(err){
+      console.error('remove entry failed', err);
+      if (btn) { btn.disabled = false; btn.textContent = 'Remove'; }
+      alert('Could not remove entry: ' + err.message);
+    });
   }
 
   function restoreEntry(id, btn){
@@ -2351,7 +2475,8 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
           '<button type="button" class="btn btn-ghost btn-sm entry-log-restore" data-id="' + e.id + '" style="border-color:var(--border);">Restore</button>' +
           '<button type="button" class="btn btn-ghost btn-sm entry-log-purge" data-id="' + e.id + '" style="border-color:var(--border);color:#c0392b;">Delete forever</button>';
       } else {
-        statusHtml = '<span style="color:var(--accent);">Active</span>';
+        statusHtml = '<span style="color:var(--accent);">Active</span>' +
+          '<button type="button" class="btn btn-ghost btn-sm entry-log-remove" data-id="' + e.id + '" style="border-color:var(--border);">Remove</button>';
         if (e.edits && e.edits.length) {
           // Every past version stays listed (oldest edit first below becomes
           // last shown — newest change on top) with its own revert button, so
@@ -2376,6 +2501,9 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
         historyHtml +
         '</div>';
     }).join('');
+    Array.prototype.forEach.call(el.querySelectorAll('.entry-log-remove'), function(btn){
+      btn.addEventListener('click', function(){ removeEntryFromLog(btn.dataset.id, btn); });
+    });
     Array.prototype.forEach.call(el.querySelectorAll('.entry-log-restore'), function(btn){
       btn.addEventListener('click', function(){ restoreEntry(btn.dataset.id, btn); });
     });
@@ -2543,6 +2671,40 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
         if (!left && !document.hidden) window.location.href = a.href;
       }, 2000);
     });
+  });
+})();
+</script>
+<script>
+// Jump menu highlight + FAQ accordions. Both fail gracefully: without JS the
+// menu still works as plain anchor links and every FAQ answer stays visible.
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('.jump-nav a'));
+  if ('IntersectionObserver' in window && links.length) {
+    var byId = {};
+    links.forEach(function(a){ byId[a.getAttribute('href').slice(1)] = a; });
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (en.isIntersecting && byId[en.target.id]) {
+          links.forEach(function(a){ a.classList.remove('is-active'); });
+          byId[en.target.id].classList.add('is-active');
+          var bar = byId[en.target.id].parentNode;
+          var a = byId[en.target.id];
+          bar.scrollTo({ left: a.offsetLeft - 16, behavior: 'smooth' });
+        }
+      });
+    }, { rootMargin: '-35% 0px -60% 0px' });
+    Object.keys(byId).forEach(function(id){ var el = document.getElementById(id); if (el) io.observe(el); });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.faq-item'), function(item){
+    var h = item.querySelector('h3');
+    if (!h) return;
+    var d = document.createElement('details');
+    d.className = 'faq-item';
+    var sm = document.createElement('summary');
+    sm.appendChild(h);
+    d.appendChild(sm);
+    while (item.firstChild) d.appendChild(item.firstChild);
+    item.parentNode.replaceChild(d, item);
   });
 })();
 </script>
