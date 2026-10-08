@@ -1198,6 +1198,10 @@ details.faq-item>:not(summary){margin-bottom:16px;}
               <input type="text" id="statusInput" maxlength="140" placeholder="Status message" style="flex:1;min-width:14em;">
               <button id="saveStatusBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Show Banner</button>
               <button id="clearStatusBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Clear</button>
+              <label style="display:flex;align-items:flex-start;gap:8px;width:100%;font-size:.82rem;color:var(--text-muted);cursor:pointer;">
+                <input type="checkbox" id="statusPushChk" style="margin-top:3px;flex:none;">
+                <span><strong>Also send this as a push alert</strong> to every phone that turned on notifications. A sent alert can&rsquo;t be taken back. It&rsquo;s sent once per Show Banner tap, and Clear never sends one. Leave unticked for a banner only.</span>
+              </label>
             </div>
             <div class="admin-row" style="margin:0;">
               <input type="number" step="1" id="raffleInput" placeholder="50/50 total ($)" style="width:11em;">
@@ -2328,12 +2332,21 @@ details.faq-item>:not(summary){margin-bottom:16px;}
     if (statusInputEl && document.activeElement !== statusInputEl) statusInputEl.value = t;
   }, function(err){ console.error('status banner listen error', err); });
 
-  function saveStatusBanner(text, btn, label){
-    if (btn) { if (btn.disabled) return; btn.disabled = true; btn.textContent = 'Saving…'; }
-    db.collection('meta').doc('status').set({
-      text: text, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true }).then(function(){
+  var statusPushChk = document.getElementById('statusPushChk');
+  function saveStatusBanner(text, btn, label, sendPush){
+    if (btn && btn.disabled) return;
+    if (sendPush) {
+      if (!text) { alert('Type a message first.'); return; }
+      if (!confirm('Send this as a push alert to everyone who turned on notifications?\n\n"' + text + '"\n\nThis can\u2019t be taken back.')) return;
+    }
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+    var data = { text: text, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+    // A fresh number on every push request; the Cloud Function sends one alert
+    // each time this value changes (see sendStatusAlert).
+    if (sendPush) data.pushRequestedAt = Date.now();
+    db.collection('meta').doc('status').set(data, { merge: true }).then(function(){
       if (btn) { btn.disabled = false; btn.textContent = label; }
+      if (sendPush && statusPushChk) statusPushChk.checked = false;
     }).catch(function(err){
       console.error('status banner save failed', err);
       if (btn) { btn.disabled = false; btn.textContent = label; }
@@ -2341,14 +2354,15 @@ details.faq-item>:not(summary){margin-bottom:16px;}
     });
   }
   document.getElementById('saveStatusBtn').addEventListener('click', function(){
-    saveStatusBanner(statusInputEl.value.trim(), this, 'Show Banner');
+    saveStatusBanner(statusInputEl.value.trim(), this, 'Show Banner', !!(statusPushChk && statusPushChk.checked));
   });
   document.getElementById('clearStatusBtn').addEventListener('click', function(){
     statusInputEl.value = '';
-    saveStatusBanner('', this, 'Clear');
+    if (statusPushChk) statusPushChk.checked = false;
+    saveStatusBanner('', this, 'Clear', false);
   });
   statusInputEl.addEventListener('keydown', function(e){
-    if (e.key === 'Enter') { e.preventDefault(); saveStatusBanner(statusInputEl.value.trim(), document.getElementById('saveStatusBtn'), 'Show Banner'); }
+    if (e.key === 'Enter') { e.preventDefault(); saveStatusBanner(statusInputEl.value.trim(), document.getElementById('saveStatusBtn'), 'Show Banner', !!(statusPushChk && statusPushChk.checked)); }
   });
 
   // --- Staff-only entry log: every entry ever logged, in case of a mistake.
