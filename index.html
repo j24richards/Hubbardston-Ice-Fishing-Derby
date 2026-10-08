@@ -550,6 +550,7 @@
   .lb-row:first-of-type{border-top:none;}
   .lb-rank{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:700;width:1.3em;flex:none;}
   .lb-name{flex:1;}
+  .lb-youth-tag{font-size:.64rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent2);margin-left:8px;vertical-align:middle;}
   .lb-weight{font-family:'JetBrains Mono',monospace;font-weight:600;font-variant-numeric:tabular-nums;}
   .lb-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.9rem;padding:0 2px;flex:none;}
   .lb-del:hover{color:var(--accent);}
@@ -815,7 +816,7 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
     </svg>
 
     <div class="cat-group">
-      <div class="cat-group-label">Adult</div>
+      <div class="cat-group-label">Open <span class="cat-group-badge">All Ages</span></div>
       <div class="cat-grid">
         <div class="cat-card cat-card--pickerel">
           <svg class="fish-wm" aria-hidden="true"><use href="#fish-pickerel"/></svg>
@@ -885,6 +886,7 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
       <li><span class="rule-num">08</span><span>Minimum length to weigh in: 14" for bass, 16" for pickerel, 8" for perch — measured tip of the mouth to tip of the tail. All state regulations must be followed.</span></li>
       <li><span class="rule-num">09</span><span>Final weigh-in cutoff is 2:30 PM. If you're not in the weigh-in line by then, your fish can't be weighed.</span></li>
       <li><span class="rule-num">10</span><span>Please respect the pond: carry in, carry out, and leave no trash behind. No fires or motorized vehicles are permitted on the ice.</span></li>
+      <li><span class="rule-num">11</span><span>Youth anglers (12 &amp; under) can win in both places: a youth catch is ranked in its youth category and also competes in the open category for that species, so one fish can win a youth prize and an open-category cash prize.</span></li>
     </ol>
   </section>
 
@@ -981,10 +983,14 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
       <div class="prize-card">
         <div class="rank">YOUTH &middot; 12 &amp; UNDER</div>
         <h3>Biggest Fish Wins</h3>
-        <p>One winner per species — bass, pickerel, and perch — decided by weight.</p>
+        <p>One winner per species — bass, pickerel, and perch — decided by weight. Each winner takes home donated gear.</p>
       </div>
     </div>
-    <p style="margin:-8px 0 0;color:var(--text-muted);font-size:.92rem;max-width:60ch;">Prizes increase if the derby draws more than 100 entrants — last year topped 130. All prizes are awarded after the derby, back at the club.</p>
+    <p style="margin:-8px 0 14px;color:var(--text-muted);font-size:.92rem;max-width:60ch;">The cash places are open to anglers of any age — a youth catch that ranks in the top 4 by weight wins that cash prize too, on top of any youth prize.</p>
+    <div class="block-kicker" style="margin-top:8px;">Youth Prizes &mdash; Donated Gear</div>
+    <div id="youthPrizesEmpty" class="lb-empty">Photos of the gear for our youth winners will be added here — check back soon!</div>
+    <div id="youthPrizesGrid" class="prize-photo-grid"></div>
+    <p style="margin:14px 0 0;color:var(--text-muted);font-size:.92rem;max-width:60ch;">Prizes increase if the derby draws more than 100 entrants — last year topped 130. All prizes are awarded after the derby, back at the club.</p>
   </section>
 
   <section class="block block--donors">
@@ -1175,6 +1181,7 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
               <select id="prizeRaffle">
                 <option value="ticket">Ticket Raffle</option>
                 <option value="kids">Kids' Raffle</option>
+                <option value="youth">Youth Prizes (biggest fish gear)</option>
               </select>
               <input type="text" id="prizeName" placeholder="Prize name (optional)">
               <input type="file" id="prizeFiles" accept="image/*" multiple>
@@ -1591,6 +1598,24 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
   var CATEGORY_ORDER = ["Pickerel","Bass","Perch","Youth Pickerel","Youth Bass","Youth Perch"];
   function isYouthCat(cat){ return cat.indexOf('Youth') === 0; }
   function catFinishLimit(cat){ return isYouthCat(cat) ? 1 : 4; }
+  // Open categories also rank youth fish of the same species. Staff log a youth
+  // fish ONCE (under its Youth category); this pools it into the open ranking
+  // by weight, tagged fromYouth, without touching the stored entry. Ties go to
+  // whichever fish was weighed in first (earliest createdAt).
+  var OPEN_CATS = ["Pickerel","Bass","Perch"];
+  function entryTime(e){ return e.createdAt && e.createdAt.toMillis ? e.createdAt.toMillis() : Infinity; }
+  function byWeightThenFirst(a, b){
+    if (b.weight !== a.weight) return b.weight - a.weight;
+    var at = entryTime(a), bt = entryTime(b);
+    return at === bt ? 0 : (at < bt ? -1 : 1);
+  }
+  function rankedForCategory(byCat, cat){
+    var pool = (byCat[cat] || []).slice();
+    if (OPEN_CATS.indexOf(cat) >= 0) {
+      pool = pool.concat((byCat['Youth ' + cat] || []).map(function(e){ return Object.assign({}, e, { fromYouth: true }); }));
+    }
+    return pool.sort(byWeightThenFirst).slice(0, catFinishLimit(cat));
+  }
   // No fish weighed in here should ever be over this — it's a fat-finger
   // guard, not a real limit. Cold hands and gloves at the weigh station make
   // typos easy (an extra digit turns 1.65 into 165), so anything above this
@@ -1818,6 +1843,8 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
   var ticketPrizesGridEl = document.getElementById('ticketPrizesGrid');
   var kidsPrizesEmptyEl = document.getElementById('kidsPrizesEmpty');
   var kidsPrizesGridEl = document.getElementById('kidsPrizesGrid');
+  var youthPrizesEmptyEl = document.getElementById('youthPrizesEmpty');
+  var youthPrizesGridEl = document.getElementById('youthPrizesGrid');
   var prizeRaffleEl = document.getElementById('prizeRaffle');
   var prizeNameEl = document.getElementById('prizeName');
   var prizeFilesEl = document.getElementById('prizeFiles');
@@ -1907,6 +1934,7 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
     renderLeaderboard(latestEntries);
     renderPrizes('ticket', latestTicketPrizes);
     renderPrizes('kids', latestKidsPrizes);
+    renderPrizes('youth', latestYouthPrizes);
     if (user) { renderAdminCatTabs(); renderAdminCatEditor(); renderEntryLog(); }
   });
 
@@ -2056,6 +2084,7 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
       ? '<p class="admin-cat-empty">'+overflow+' additional ' + (overflow===1?'entry':'entries') + ' recorded below the ' + (youth?'top spot':'4th place cutoff') + ' — delete one above to bring the next one in.</p>'
       : '';
     adminCatEditorEl.innerHTML = '<div class="admin-cat-editor-title">'+escapeHtml(activeAdminCat)+' — '+(youth?'top finish':'finishes')+'</div>' +
+      (youth ? '' : '<p class="admin-cat-empty">Youth fish of this species also show on this list automatically — log them under the Youth tab only, not here.</p>') +
       (rows || '<p class="admin-cat-empty">No entries yet for this category.</p>') + addRow + overflowNote;
 
     Array.prototype.forEach.call(adminCatEditorEl.querySelectorAll('.admin-entry-row:not(.admin-entry-add)'), function(row){
@@ -2176,15 +2205,17 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
     visible.forEach(function(e){
       (byCat[e.category] = byCat[e.category] || []).push(e);
     });
-    var cats = Object.keys(byCat).sort(function(a,b){
+    var cats = Object.keys(byCat);
+    OPEN_CATS.forEach(function(c){ if (cats.indexOf(c) < 0 && byCat['Youth ' + c]) cats.push(c); });
+    cats.sort(function(a,b){
       var ai = CATEGORY_ORDER.indexOf(a), bi = CATEGORY_ORDER.indexOf(b);
       return (ai<0?99:ai) - (bi<0?99:bi);
     });
     var isStaff = !!auth.currentUser;
     lbGroupsEl.innerHTML = cats.map(function(cat){
-      var top = byCat[cat].slice().sort(function(a,b){ return b.weight-a.weight; }).slice(0, catFinishLimit(cat));
+      var top = rankedForCategory(byCat, cat);
       var rows = top.map(function(e,i){
-        return '<div class="lb-row"><span class="lb-rank">'+(i+1)+'</span><span class="lb-name">'+escapeHtml(e.angler)+'</span><span class="lb-weight">'+e.weight.toFixed(2)+' lb</span>'+
+        return '<div class="lb-row"><span class="lb-rank">'+(i+1)+'</span><span class="lb-name">'+escapeHtml(e.angler)+(e.fromYouth ? '<span class="lb-youth-tag">Youth</span>' : '')+'</span><span class="lb-weight">'+e.weight.toFixed(2)+' lb</span>'+
           (isStaff ? '<button class="lb-del" data-id="'+e.id+'" title="Remove">✕</button>' : '') +
           '</div>';
       }).join('');
@@ -2436,11 +2467,14 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
 
   var latestTicketPrizes = [];
   var latestKidsPrizes = [];
+  var latestYouthPrizes = [];
 
   function renderPrizes(raffleKey, prizes){
-    if (raffleKey === 'ticket') { latestTicketPrizes = prizes; } else { latestKidsPrizes = prizes; }
-    var emptyEl = raffleKey === 'ticket' ? ticketPrizesEmptyEl : kidsPrizesEmptyEl;
-    var gridEl = raffleKey === 'ticket' ? ticketPrizesGridEl : kidsPrizesGridEl;
+    if (raffleKey === 'ticket') { latestTicketPrizes = prizes; }
+    else if (raffleKey === 'youth') { latestYouthPrizes = prizes; }
+    else { latestKidsPrizes = prizes; }
+    var emptyEl = raffleKey === 'ticket' ? ticketPrizesEmptyEl : (raffleKey === 'youth' ? youthPrizesEmptyEl : kidsPrizesEmptyEl);
+    var gridEl = raffleKey === 'ticket' ? ticketPrizesGridEl : (raffleKey === 'youth' ? youthPrizesGridEl : kidsPrizesGridEl);
     if (!prizes.length) {
       emptyEl.hidden = false;
       gridEl.innerHTML = '';
@@ -2454,7 +2488,7 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
       // A src/data-* attribute built from an unescaped value is just as exploitable
       // as unescaped text content if a stray quote can ever reach it.
       return '<div class="prize-photo-card">' +
-        '<img src="' + escapeHtml(p.url) + '" alt="' + (p.name ? escapeHtml(p.name) : 'Raffle prize') + '">' +
+        '<img src="' + escapeHtml(p.url) + '" alt="' + (p.name ? escapeHtml(p.name) : (raffleKey === 'youth' ? 'Youth prize' : 'Raffle prize')) + '">' +
         (p.name ? '<div class="prize-photo-name">' + escapeHtml(p.name) + '</div>' : '') +
         (isStaff ? '<button class="prize-photo-del" data-id="' + escapeHtml(p.id) + '" data-path="' + escapeHtml(p.path || '') + '" title="Remove">✕</button>' : '') +
         '</div>';
@@ -2471,13 +2505,16 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
   }
 
   db.collection('prizes').orderBy('createdAt', 'desc').onSnapshot(function(snap){
-    var ticket = [], kids = [];
+    var ticket = [], kids = [], youth = [];
     snap.forEach(function(doc){
       var p = Object.assign({id:doc.id}, doc.data());
-      if (p.raffle === 'kids') { kids.push(p); } else { ticket.push(p); }
+      if (p.raffle === 'kids') { kids.push(p); }
+      else if (p.raffle === 'youth') { youth.push(p); }
+      else { ticket.push(p); }
     });
     renderPrizes('ticket', ticket);
     renderPrizes('kids', kids);
+    renderPrizes('youth', youth);
   }, function(err){ console.error('prizes listen error', err); });
 })();
 </script>

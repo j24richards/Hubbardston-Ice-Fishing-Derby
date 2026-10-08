@@ -299,7 +299,7 @@
       <div class="block-head">
         <div class="block-kicker">Hand Out The Prizes</div>
         <h2 class="display block-title">Winners By Category</h2>
-        <p class="block-desc">Pulled live from today's weigh-in entries &mdash; adult categories show top 4, youth categories show the top finisher.</p>
+        <p class="block-desc">Pulled live from today's weigh-in entries &mdash; open categories show the top 4 (youth catches of that species are included and tagged), youth categories show the top finisher.</p>
       </div>
       <div id="winnersEmpty" class="lb-empty">No entries recorded yet.</div>
       <div id="winnersGroups"></div>
@@ -335,6 +335,15 @@
   var CATEGORY_ORDER = ["Pickerel","Bass","Perch","Youth Pickerel","Youth Bass","Youth Perch"];
   function isYouthCat(cat){ return cat.indexOf('Youth') === 0; }
   function catFinishLimit(cat){ return isYouthCat(cat) ? 1 : 4; }
+  // Open categories also rank youth fish of the same species (a youth fish is
+  // logged once, under its Youth category). Ties go to whichever was weighed first.
+  var OPEN_CATS = ["Pickerel","Bass","Perch"];
+  function entryTime(e){ return e.createdAt && e.createdAt.toMillis ? e.createdAt.toMillis() : Infinity; }
+  function byWeightThenFirst(a, b){
+    if (b.weight !== a.weight) return b.weight - a.weight;
+    var at = entryTime(a), bt = entryTime(b);
+    return at === bt ? 0 : (at < bt ? -1 : 1);
+  }
 
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, function(c){
@@ -414,6 +423,8 @@
   });
 
   function renderWinners(entries){
+    // Entries staff removed from the leaderboard are soft-deleted (deleted:true) and must not show up as winners.
+    entries = entries.filter(function(e){ return !e.deleted; });
     var emptyEl = document.getElementById('winnersEmpty');
     var groupsEl = document.getElementById('winnersGroups');
     if (!entries.length) {
@@ -427,10 +438,14 @@
     var rankLabels4 = ['1st','2nd','3rd','4th'];
     groupsEl.innerHTML = CATEGORY_ORDER.map(function(cat){
       var youth = isYouthCat(cat);
-      var top = (byCat[cat] || []).slice().sort(function(a,b){ return b.weight - a.weight; }).slice(0, catFinishLimit(cat));
+      var pool = (byCat[cat] || []).slice();
+      if (OPEN_CATS.indexOf(cat) >= 0) {
+        pool = pool.concat((byCat['Youth ' + cat] || []).map(function(e){ return Object.assign({}, e, { fromYouth: true }); }));
+      }
+      var top = pool.sort(byWeightThenFirst).slice(0, catFinishLimit(cat));
       var rows = top.length ? top.map(function(e, i){
         var label = youth ? 'Winner' : (rankLabels4[i] || (i+1)+'th');
-        return '<div class="fin-row"><span class="fin-rank">'+label+'</span><span class="fin-name">'+escapeHtml(e.angler)+'</span><span class="fin-weight">'+e.weight.toFixed(2)+' lb</span></div>';
+        return '<div class="fin-row"><span class="fin-rank">'+label+'</span><span class="fin-name">'+escapeHtml(e.angler)+(e.fromYouth ? '<span class="youth-tag">Youth</span>' : '')+'</span><span class="fin-weight">'+e.weight.toFixed(2)+' lb</span></div>';
       }).join('') : '<p class="lb-empty" style="padding:2px 0;">No entries yet for this category.</p>';
       return '<div class="cat-card"><h3>'+escapeHtml(cat)+(youth ? '<span class="youth-tag">12 &amp; Under</span>' : '')+'</h3>'+rows+'</div>';
     }).join('');
