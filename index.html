@@ -2485,8 +2485,9 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
 // Waze links. The plain https://waze.com/ul link relies on the phone handing it
 // to the Waze app, which Samsung Internet (and some other Android browsers)
 // often don't do — they land on Waze's "Don't have Waze yet?" page instead.
-// On Android, tapping a Waze link now asks Android to open the Waze app
-// directly; if Waze isn't installed it falls back to the normal web link.
+// On Android, tapping a Waze link now opens Waze's own waze:// address, which
+// launches the app directly. If nothing happens within ~2 seconds (Waze not
+// installed, or the browser blocked it), it falls back to the normal web link.
 // Every other device keeps the normal link.
 (function(){
   if (!/Android/i.test(navigator.userAgent)) return;
@@ -2495,9 +2496,15 @@ html[data-outdoor="true"] .wx-notes li{border:2px solid var(--text);}
       var qs = a.getAttribute('href').split('?')[1] || '';
       if (!qs) return;
       e.preventDefault();
-      window.location.href = 'intent://?' + qs +
-        '#Intent;scheme=waze;package=com.waze;S.browser_fallback_url=' +
-        encodeURIComponent(a.href) + ';end';
+      var left = false;
+      function gone(){ left = true; }
+      document.addEventListener('visibilitychange', function(){ if (document.hidden) gone(); }, { once: true });
+      window.addEventListener('pagehide', gone, { once: true });
+      window.addEventListener('blur', gone, { once: true });
+      window.location.href = 'waze://?' + qs;
+      setTimeout(function(){
+        if (!left && !document.hidden) window.location.href = a.href;
+      }, 2000);
     });
   });
 })();
