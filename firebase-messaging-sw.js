@@ -26,8 +26,8 @@ var messaging = firebase.messaging();
 // or when offline); pictures use the saved copy and refresh in the background.
 // Only same-site GET requests are touched: the live leaderboard, banner and
 // notifications talk to Google's servers directly and are never cached here.
-var SHELL_CACHE = 'derby-shell-v1';
-var SHELL_FILES = ['./', 'index.html', 'photos.html', 'manifest.json', 'icon-192.png', 'hero-photo.webp', 'brand-mark.webp', 'bass-flag.webp', 'bass-flag-nopole.webp'];
+var SHELL_CACHE = 'derby-shell-v2';
+var SHELL_FILES = ['./', 'index.html', 'photos.html', 'manifest.json', 'icon-192.png', 'hero-photo.webp', 'brand-mark.webp', 'bass-flag.webp', 'bass-flag-nopole.webp', 'pond-map.webp', 'pond-map-phone.webp'];
 
 self.addEventListener('install', function(event){
   self.skipWaiting();
