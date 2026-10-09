@@ -583,6 +583,16 @@
     text-decoration:none;transition:border-color .15s,color .15s,background .15s;
   }
   .sponsor-slot:hover{border-color:var(--accent);color:var(--accent);background:var(--accent2-bg);}
+  .sponsor-slot--cta{
+    border:none;background:var(--accent);color:var(--accent-text);height:auto;min-height:96px;padding:20px 24px;gap:16px;
+    text-transform:none;letter-spacing:normal;text-align:left;justify-content:center;
+    box-shadow:0 8px 22px rgba(224,122,30,.38);
+  }
+  .sponsor-slot--cta svg{width:34px;height:34px;flex:none;}
+  .sponsor-slot--cta .cta-text{display:flex;flex-direction:column;gap:3px;}
+  .sponsor-slot--cta .cta-text b{font-size:1.3rem;line-height:1.15;font-weight:800;}
+  .sponsor-slot--cta .cta-text span{font-size:.95rem;font-weight:600;line-height:1.3;}
+  .sponsor-slot--cta:hover{background:var(--accent);color:var(--accent-text);border:none;filter:brightness(1.07);transform:translateY(-1px);}
   .sponsor-slot--filled{
     border:1px solid var(--border);border-top:3px solid var(--accent);background:var(--bg-card);box-shadow:var(--shadow);
     flex-direction:column;align-items:flex-start;justify-content:center;gap:5px;height:auto;min-height:88px;padding:18px;
@@ -1202,7 +1212,10 @@ details.faq-item>:not(summary){margin-bottom:16px;}
       </a>
     -->
     <div class="sponsor-open">
-      <a class="sponsor-slot" href="https://www.hubbardstonrodandgun.com/contact-us.html" target="_blank" rel="noopener">+ Want to donate? Contact the club &amp; get recognized here</a>
+      <a class="sponsor-slot sponsor-slot--cta" href="https://www.hubbardstonrodandgun.com/contact-us.html" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C1 8.7 2.7 5 6.2 5c2.1 0 3.7 1.2 5.8 3.4C14.1 6.2 15.7 5 17.8 5c3.5 0 5.2 3.7 3.8 6.8C19.5 16.4 12 21 12 21z" fill="currentColor"/></svg>
+        <span class="cta-text"><b>Want to donate?</b><span>Contact the club &amp; get recognized here &rarr;</span></span>
+      </a>
     </div>
   </section>
 
