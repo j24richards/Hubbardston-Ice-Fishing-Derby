@@ -472,6 +472,14 @@
   .cat-youth{position:relative;margin-top:14px;padding-top:12px;border-top:1px dashed var(--accent2);display:flex;gap:8px;align-items:flex-start;font-size:.85rem;line-height:1.4;}
   .cat-youth svg{width:20px;height:21px;flex:none;color:var(--accent2);}
   .cat-youth b{color:var(--accent2);}
+  /* Overall vs Kids' prizes */
+  .cat-group-badge--all{background:var(--bg-sunken);color:var(--text-muted);}
+  .kids-prizes{margin-top:30px;padding:20px 18px 18px;border:2px solid var(--accent2);border-radius:16px;background:var(--accent2-bg);}
+  .kids-prizes .cat-group-label{font-size:.9rem;margin-bottom:8px;}
+  .kids-lead{margin:0 0 14px;font-size:1rem;line-height:1.5;max-width:60ch;}
+  .kids-note{margin:14px 0 0;color:var(--text-muted);font-size:.9rem;max-width:60ch;}
+  .kids-prizes .cat-card{background:var(--bg-card);}
+  #prizes .kids-prizes .cat-card .fish-wm{top:auto;bottom:12px;right:12px;}
   .note{margin:18px 0 14px;color:var(--text-muted);font-size:.92rem;max-width:60ch;}
   .rule-group{margin-top:26px;}
   .rule-group-title{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:1.5rem;letter-spacing:.04em;margin:0 0 12px;color:var(--text);}
@@ -962,7 +970,7 @@ details.faq-item>:not(summary){margin-bottom:16px;}
     <div class="block-head">
       <div class="block-kicker">What You Could Win</div>
       <h2 class="block-title">Categories &amp; Prizes</h2>
-      <p class="block-desc">Three species, one weigh-in station. The top four fish in each species win cash &mdash; and young anglers get their own prize on top. Proceeds after costs go toward pond stocking and youth fishing gear.</p>
+      <p class="block-desc">Three species, one weigh-in station. The top four fish in each species win cash, whatever your age &mdash; and kids 12 &amp; under compete for prizes of their own. Proceeds after costs go toward pond stocking and youth fishing gear.</p>
     </div>
 
     <!-- Fish silhouettes, vector-traced from species ID outlines. Defined once
@@ -974,6 +982,7 @@ details.faq-item>:not(summary){margin-bottom:16px;}
       <symbol id="rosette" viewBox="0 0 100 104" preserveAspectRatio="xMidYMid meet"><path d="M38,64 L30,100 L47,90 L50,100 L53,90 L70,100 L62,64 Z" fill="currentColor" opacity=".75"/><path d="M50.0,12.0 L56.2,18.8 L65.0,16.0 L67.0,25.0 L76.0,27.0 L73.2,35.8 L80.0,42.0 L73.2,48.2 L76.0,57.0 L67.0,59.0 L65.0,68.0 L56.2,65.2 L50.0,72.0 L43.8,65.2 L35.0,68.0 L33.0,59.0 L24.0,57.0 L26.8,48.2 L20.0,42.0 L26.8,35.8 L24.0,27.0 L33.0,25.0 L35.0,16.0 L43.8,18.8 Z" fill="currentColor"/><circle cx="50" cy="42" r="13" fill="var(--bg-card)"/></symbol>
     </svg>
 
+    <div class="cat-group-label">Overall Prizes <span class="cat-group-badge cat-group-badge--all">Any Age</span></div>
     <div class="cat-grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));">
         <div class="cat-card cat-card--pickerel">
           <svg class="fish-wm" aria-hidden="true"><use href="#fish-pickerel"/></svg>
@@ -985,10 +994,6 @@ details.faq-item>:not(summary){margin-bottom:16px;}
             <div><span>2ND</span><b>$75</b></div>
             <div><span>3RD</span><b>$50</b></div>
             <div><span>4TH</span><b>$20</b></div>
-          </div>
-          <div class="cat-youth">
-            <svg aria-hidden="true"><use href="#rosette"/></svg>
-            <span><b>Youth, 12 &amp; under:</b> biggest pickerel wins donated gear.</span>
           </div>
         </div>
         <div class="cat-card cat-card--bass">
@@ -1002,10 +1007,6 @@ details.faq-item>:not(summary){margin-bottom:16px;}
             <div><span>3RD</span><b>$50</b></div>
             <div><span>4TH</span><b>$20</b></div>
           </div>
-          <div class="cat-youth">
-            <svg aria-hidden="true"><use href="#rosette"/></svg>
-            <span><b>Youth, 12 &amp; under:</b> biggest bass wins donated gear.</span>
-          </div>
         </div>
         <div class="cat-card cat-card--perch">
           <svg class="fish-wm" aria-hidden="true"><use href="#fish-perch"/></svg>
@@ -1018,19 +1019,51 @@ details.faq-item>:not(summary){margin-bottom:16px;}
             <div><span>3RD</span><b>$50</b></div>
             <div><span>4TH</span><b>$20</b></div>
           </div>
-          <div class="cat-youth">
-            <svg aria-hidden="true"><use href="#rosette"/></svg>
-            <span><b>Youth, 12 &amp; under:</b> biggest perch wins donated gear.</span>
-          </div>
         </div>
     </div>
 
-    <p class="note">The cash places are open to anglers of any age &mdash; a youth catch that ranks in the top 4 by weight wins that cash prize too, on top of the youth prize.</p>
+    <p class="note">The cash places are open to anglers of any age &mdash; a kid&rsquo;s catch that ranks in the top 4 by weight wins that cash prize too, on top of the Kids&rsquo; Prize gear.</p>
 
-    <div id="youthPrizesWrap" hidden>
-      <div class="block-kicker" style="margin-top:8px;">Youth Prizes &mdash; Donated Gear</div>
-      <div id="youthPrizesEmpty" class="lb-empty" hidden></div>
-      <div id="youthPrizesGrid" class="prize-photo-grid"></div>
+    <div class="kids-prizes" id="kids-prizes">
+      <div class="cat-group-label cat-group-label--youth">Kids&rsquo; Prizes <span class="cat-group-badge">12 &amp; Under</span></div>
+      <p class="kids-lead">Young anglers get their own prizes. The biggest fish of each species, by weight, wins donated fishing gear &mdash; one winner per species.</p>
+      <div class="cat-grid">
+        <div class="cat-card cat-card--youth cat-card--pickerel">
+          <svg class="fish-wm" aria-hidden="true"><use href="#fish-pickerel"/></svg>
+          <svg class="rosette" aria-hidden="true"><use href="#rosette"/></svg>
+          <span class="fish-pair">
+            <svg class="fish" aria-hidden="true"><use href="#fish-pickerel"/></svg>
+            <svg class="fish-jr" aria-hidden="true"><use href="#fish-pickerel"/></svg>
+          </span>
+          <h3>Youth Pickerel</h3>
+          <p>Biggest fish wins donated gear</p>
+        </div>
+        <div class="cat-card cat-card--youth cat-card--bass">
+          <svg class="fish-wm" aria-hidden="true"><use href="#fish-bass"/></svg>
+          <svg class="rosette" aria-hidden="true"><use href="#rosette"/></svg>
+          <span class="fish-pair">
+            <svg class="fish" aria-hidden="true"><use href="#fish-bass"/></svg>
+            <svg class="fish-jr" aria-hidden="true"><use href="#fish-bass"/></svg>
+          </span>
+          <h3>Youth Bass</h3>
+          <p>Biggest fish wins donated gear</p>
+        </div>
+        <div class="cat-card cat-card--youth cat-card--perch">
+          <svg class="fish-wm" aria-hidden="true"><use href="#fish-perch"/></svg>
+          <svg class="rosette" aria-hidden="true"><use href="#rosette"/></svg>
+          <span class="fish-pair">
+            <svg class="fish" aria-hidden="true"><use href="#fish-perch"/></svg>
+            <svg class="fish-jr" aria-hidden="true"><use href="#fish-perch"/></svg>
+          </span>
+          <h3>Youth Perch</h3>
+          <p>Biggest fish wins donated gear</p>
+        </div>
+      </div>
+      <div id="youthPrizesWrap" hidden>
+        <div class="block-kicker" style="margin-top:14px;">The Gear &mdash; Donated Prizes</div>
+        <div id="youthPrizesEmpty" class="lb-empty" hidden></div>
+        <div id="youthPrizesGrid" class="prize-photo-grid"></div>
+      </div>
     </div>
     <p class="note" style="margin-top:6px;">Prizes increase if the derby draws more than 100 entrants &mdash; last year topped 130. All prizes are awarded after the derby, back at the club.</p>
   </section>
@@ -1067,39 +1100,6 @@ details.faq-item>:not(summary){margin-bottom:16px;}
         <li><span class="rule-num">11</span><span>Please respect the pond: carry in, carry out, and leave no trash behind. No fires or motorized vehicles are permitted on the ice.</span></li>
       </ol>
     </div>
-  </section>
-
-
-  <section class="block" id="fish-guide">
-    <div class="block-head">
-      <div class="block-kicker">Know Your Catch</div>
-      <h2 class="block-title">Kids&rsquo; Fish Guide</h2>
-      <p class="block-desc">Three kinds of fish count in the derby. Here&rsquo;s how to tell them apart &mdash; and how big they have to be.</p>
-    </div>
-    <div class="fg-grid">
-      <div class="fg-card fg-card--pickerel">
-        <svg class="fg-fish" aria-hidden="true"><use href="#fish-pickerel"/></svg>
-        <h3>Pickerel</h3>
-        <p class="fg-tag">Long, skinny, and toothy.</p>
-        <ul><li>Green sides with dark <b>chain-link</b> marks</li><li>Long, flat snout like a duck bill</li><li>Sharp teeth &mdash; use pliers, not fingers!</li></ul>
-        <span class="fg-min">Must be 16&Prime; or longer</span>
-      </div>
-      <div class="fg-card fg-card--bass">
-        <svg class="fg-fish" aria-hidden="true"><use href="#fish-bass"/></svg>
-        <h3>Bass</h3>
-        <p class="fg-tag">Big mouth, big fight.</p>
-        <ul><li>Green back with a dark stripe down the side</li><li>Mouth reaches back past the eye</li><li>Two joined fins along its back</li></ul>
-        <span class="fg-min">Must be 14&Prime; or longer</span>
-      </div>
-      <div class="fg-card fg-card--perch">
-        <svg class="fg-fish" aria-hidden="true"><use href="#fish-perch"/></svg>
-        <h3>Yellow Perch</h3>
-        <p class="fg-tag">Small, golden, and a common catch.</p>
-        <ul><li>Gold-yellow with dark <b>tiger stripes</b></li><li>Spiky fin on its back &mdash; careful!</li><li>Orange-ish fins on the bottom</li></ul>
-        <span class="fg-min">Must be 8&Prime; or longer</span>
-      </div>
-    </div>
-    <p class="note"><b>How to measure:</b> lay the fish flat, from the tip of its mouth to the tip of its tail. <b>Keep it alive</b> in a bucket until weigh-in &mdash; dead fish can&rsquo;t be weighed. Kids 12 &amp; under: your biggest fish of each kind can win donated gear!</p>
   </section>
 
   <section class="block" id="weather">
@@ -1263,6 +1263,34 @@ details.faq-item>:not(summary){margin-bottom:16px;}
       <h2 class="block-title">FAQ</h2>
     </div>
     <div class="faq">
+      <div class="faq-item" id="fish-guide">
+        <h3>Kids&rsquo; Fish Guide &mdash; how to tell the fish apart</h3>
+        <p>Three kinds of fish count in the derby. Here&rsquo;s how to tell them apart &mdash; and how big they have to be.</p>
+        <div class="fg-grid">
+      <div class="fg-card fg-card--pickerel">
+        <svg class="fg-fish" aria-hidden="true"><use href="#fish-pickerel"/></svg>
+        <h3>Pickerel</h3>
+        <p class="fg-tag">Long, skinny, and toothy.</p>
+        <ul><li>Green sides with dark <b>chain-link</b> marks</li><li>Long, flat snout like a duck bill</li><li>Sharp teeth &mdash; use pliers, not fingers!</li></ul>
+        <span class="fg-min">Must be 16&Prime; or longer</span>
+      </div>
+      <div class="fg-card fg-card--bass">
+        <svg class="fg-fish" aria-hidden="true"><use href="#fish-bass"/></svg>
+        <h3>Bass</h3>
+        <p class="fg-tag">Big mouth, big fight.</p>
+        <ul><li>Green back with a dark stripe down the side</li><li>Mouth reaches back past the eye</li><li>Two joined fins along its back</li></ul>
+        <span class="fg-min">Must be 14&Prime; or longer</span>
+      </div>
+      <div class="fg-card fg-card--perch">
+        <svg class="fg-fish" aria-hidden="true"><use href="#fish-perch"/></svg>
+        <h3>Yellow Perch</h3>
+        <p class="fg-tag">Small, golden, and a common catch.</p>
+        <ul><li>Gold-yellow with dark <b>tiger stripes</b></li><li>Spiky fin on its back &mdash; careful!</li><li>Orange-ish fins on the bottom</li></ul>
+        <span class="fg-min">Must be 8&Prime; or longer</span>
+      </div>
+    </div>
+        <p class="note"><b>How to measure:</b> lay the fish flat, from the tip of its mouth to the tip of its tail. <b>Keep it alive</b> in a bucket until weigh-in &mdash; dead fish can&rsquo;t be weighed. Kids 12 &amp; under: your biggest fish of each kind can win donated gear!</p>
+      </div>
       <div class="faq-item">
         <h3>Do I need a fishing license?</h3>
         <p>Yes — anyone 16 or older needs a current Massachusetts freshwater fishing license. It's each angler's own responsibility to be properly licensed before fishing.</p>
