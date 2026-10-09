@@ -520,6 +520,7 @@
   .fg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;}
   .fg-card{background:var(--bg-card);border:1px solid var(--border);border-top:3px solid var(--c);border-radius:12px;padding:18px;box-shadow:var(--shadow);}
   .fg-card .fg-fish{width:150px;height:60px;display:block;color:var(--c);margin-bottom:8px;}
+  .fg-card .fg-photo{display:block;width:100%;height:auto;border-radius:8px;margin-bottom:10px;}
   .fg-card h3{margin:0 0 4px;font-size:1.15rem;}
   .fg-card .fg-tag{margin:0;color:var(--text-muted);font-size:.9rem;}
   .fg-card ul{margin:10px 0 0;padding-left:1.1em;font-size:.92rem;line-height:1.5;}
@@ -1264,25 +1265,25 @@ details.faq-item>:not(summary){margin-bottom:16px;}
     </div>
     <div class="faq">
       <div class="faq-item" id="fish-guide">
-        <h3>Kids&rsquo; Fish Guide &mdash; how to tell the fish apart</h3>
+        <h3>Fish Guide &mdash; how to tell the fish apart</h3>
         <p>Three kinds of fish count in the derby. Here&rsquo;s how to tell them apart &mdash; and how big they have to be.</p>
         <div class="fg-grid">
       <div class="fg-card fg-card--pickerel">
-        <svg class="fg-fish" aria-hidden="true"><use href="#fish-pickerel"/></svg>
+        <img class="fg-photo" src="guide-pickerel.webp" width="352" height="101" alt="Pickerel: a long, slim green fish with light chain-link markings and a long flat snout" loading="lazy" decoding="async">
         <h3>Pickerel</h3>
         <p class="fg-tag">Long, skinny, and toothy.</p>
         <ul><li>Green sides with dark <b>chain-link</b> marks</li><li>Long, flat snout like a duck bill</li><li>Sharp teeth &mdash; use pliers, not fingers!</li></ul>
         <span class="fg-min">Must be 16&Prime; or longer</span>
       </div>
       <div class="fg-card fg-card--bass">
-        <svg class="fg-fish" aria-hidden="true"><use href="#fish-bass"/></svg>
+        <img class="fg-photo" src="guide-bass.webp" width="310" height="147" alt="Largemouth bass: a green fish with a dark stripe along its side and a big mouth" loading="lazy" decoding="async">
         <h3>Bass</h3>
         <p class="fg-tag">Big mouth, big fight.</p>
         <ul><li>Green back with a dark stripe down the side</li><li>Mouth reaches back past the eye</li><li>Two joined fins along its back</li></ul>
         <span class="fg-min">Must be 14&Prime; or longer</span>
       </div>
       <div class="fg-card fg-card--perch">
-        <svg class="fg-fish" aria-hidden="true"><use href="#fish-perch"/></svg>
+        <img class="fg-photo" src="guide-perch.webp" width="300" height="124" alt="Yellow perch: a gold-yellow fish with dark vertical tiger stripes and orange fins" loading="lazy" decoding="async">
         <h3>Yellow Perch</h3>
         <p class="fg-tag">Small, golden, and a common catch.</p>
         <ul><li>Gold-yellow with dark <b>tiger stripes</b></li><li>Spiky fin on its back &mdash; careful!</li><li>Orange-ish fins on the bottom</li></ul>
