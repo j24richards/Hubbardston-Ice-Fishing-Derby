@@ -1342,8 +1342,8 @@ details.faq-item>:not(summary){margin-bottom:16px;}
             <p class="notify-note">iPhones only allow site notifications after the page is added to your Home Screen — a one-time setup:</p>
             <ol class="notify-ol">
               <li><span class="step-num">1</span><span>Open this site in the <strong>Safari</strong> app (the blue compass icon). Other browsers like Chrome can't do this step on iPhone.</span></li>
-              <li><span class="step-num">2</span><span>Tap the <strong>Share</strong> icon in the toolbar — a square with an arrow pointing up ⬆️. On iPhone it's usually at the bottom of the screen; on iPad, top-right.</span></li>
-              <li><span class="step-num">3</span><span>In the menu that pops up, scroll down and tap <strong>Add to Home Screen</strong>.</span></li>
+              <li><span class="step-num">2</span><span>Tap the <strong>Share</strong> icon in <strong>Safari's own toolbar</strong> — a square with an arrow pointing up ⬆️. On iPhone it's at the bottom of the screen; on iPad, top-right. Do not use the Share button on this web page itself — it has no Home Screen option.</span></li>
+              <li><span class="step-num">3</span><span>In the menu that pops up, scroll down and tap <strong>Add to Home Screen</strong>. If you do not see it, scroll to the bottom of the list, tap <strong>Edit Actions</strong>, and add it.</span></li>
               <li><span class="step-num">4</span><span>Tap <strong>Add</strong> in the top-right corner to confirm.</span></li>
               <li><span class="step-num">5</span><span>Find the new <strong>Derby</strong> icon on your Home Screen (it looks like the site's icon, not the Safari compass) and open the site from there — not from Safari.</span></li>
               <li><span class="step-num">6</span><span>Tap <strong>🔔 Notify me about new catches</strong>, then tap <strong>Allow</strong> when asked. Done — you'll now get catch alerts even with the app closed.</span></li>
@@ -1951,7 +1951,7 @@ details.faq-item>:not(summary){margin-bottom:16px;}
       // one-time install step up front instead of letting a tap do nothing.
       notifyBtn.disabled = false;
       notifyBtn.addEventListener('click', function(){
-        setNotifyStatus('On iPhone/iPad, notifications only work after adding this page to your Home Screen: tap the Share icon, then "Add to Home Screen," then open the Derby from that new icon and tap Notify again from there.');
+        setNotifyStatus('On iPhone/iPad, notifications only work after adding this page to your Home Screen: tap the Share icon in the toolbar of the Safari app (not the Share button on this page), then "Add to Home Screen," then open the Derby from that new icon and tap Notify again from there.');
       });
       return;
     }
