@@ -944,6 +944,8 @@ details.faq-item>:not(summary){margin-bottom:16px;}
       <div class="notify-banner">
         <button type="button" id="notifyBtn" class="btn btn-ghost btn-sm notify-btn">🔔 Notify me about new catches</button>
         <p id="notifyStatus" class="notify-status" hidden></p>
+        <style>#notifyOffBtn[hidden]{display:none !important;}</style>
+        <button type="button" id="notifyOffBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);margin-top:6px;" hidden>Turn off alerts on this phone</button>
       </div>
     </div>
 
@@ -1399,6 +1401,7 @@ details.faq-item>:not(summary){margin-bottom:16px;}
               <input type="text" id="statusInput" maxlength="140" placeholder="Status message" style="flex:1;min-width:14em;">
               <button id="saveStatusBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Show Banner</button>
               <button id="clearStatusBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Clear</button>
+              <div id="alertsSwitch" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%;padding:8px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin:4px 0;"><strong style="font-size:.85rem;">Push alerts master switch</strong><button type="button" id="alertsToggleBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" disabled>Loading…</button><span id="alertsToggleState" style="font-size:.78rem;color:var(--text-muted);"></span></div>
               <div id="statusQuick" style="display:flex;flex-wrap:wrap;gap:6px;width:100%;align-items:center;">
                 <span style="font-size:.78rem;color:var(--text-muted);">Quick fill (nothing is sent until you tap Show Banner):</span>
                 <button type="button" class="btn btn-ghost btn-sm status-quick" style="border-color:var(--border);" data-msg="Ice confirmed — the derby is ON! Check-in opens 5:30 AM.">Derby is ON</button>
@@ -1979,6 +1982,17 @@ details.faq-item>:not(summary){margin-bottom:16px;}
     // site settings, a previous visit) so a token still actually gets saved
     // instead of the button just claiming "Notifications on" with nothing
     // registered behind it.
+    function alertsOffFlag(v){
+      try {
+        if (v === undefined) return localStorage.getItem('derbyAlertsOff') === '1';
+        if (v) localStorage.setItem('derbyAlertsOff','1'); else localStorage.removeItem('derbyAlertsOff');
+      } catch(e) {}
+      return false;
+    }
+    function showOffBtn(on){
+      var b = document.getElementById('notifyOffBtn');
+      if (b) b.hidden = !on;
+    }
     function subscribeToPush(opts){
       opts = opts || {};
       if (!opts.silent) setNotifyStatus('Setting up notifications…');
@@ -2025,7 +2039,7 @@ details.faq-item>:not(summary){margin-bottom:16px;}
               return;
             }
             return saveNotificationToken(token).then(function(){
-              if (done()) return;
+              if (done()) return; alertsOffFlag(false); showOffBtn(true);
               notifyBtn.textContent = '🔔 Notifications on';
               notifyBtn.disabled = true;
               setNotifyStatus("You'll get a notification when a new fish hits the leaderboard.");
@@ -2040,7 +2054,7 @@ details.faq-item>:not(summary){margin-bottom:16px;}
       });
     }
 
-    if (Notification.permission === 'granted') {
+    if (Notification.permission === 'granted' && alertsOffFlag()) { notifyBtn.textContent = '🔔 Notify me about new catches'; notifyBtn.disabled = false; showOffBtn(false); setNotifyStatus('Alerts are off on this phone. Tap the button to turn them back on.'); } else if (Notification.permission === 'granted') { showOffBtn(true);
       notifyBtn.textContent = '🔔 Notifications on';
       notifyBtn.disabled = true;
       // Confirm (quietly) that a token is actually on file rather than just
@@ -2054,6 +2068,27 @@ details.faq-item>:not(summary){margin-bottom:16px;}
       setNotifyStatus("Notifications are blocked for this site in your browser's settings.");
     }
 
+    var notifyOffBtn = document.getElementById('notifyOffBtn');
+    if (notifyOffBtn) notifyOffBtn.addEventListener('click', function(){
+      notifyOffBtn.disabled = true;
+      function finish(ok){
+        notifyOffBtn.disabled = false;
+        if (!ok) { setNotifyStatus('Could not turn alerts off just now. Check your connection and try again, or switch notifications off in your browser settings.'); return; }
+        alertsOffFlag(true); showOffBtn(false);
+        notifyBtn.textContent = '\uD83D\uDD14 Notify me about new catches'; notifyBtn.disabled = false;
+        setNotifyStatus('Alerts are off on this phone. Tap the button to turn them back on.');
+      }
+      var tasks = [];
+      try { tasks.push(firebase.messaging().deleteToken()); } catch(e) {}
+      if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) {
+        tasks.push(navigator.serviceWorker.getRegistration().then(function(reg){
+          if (!reg || !reg.pushManager) return true;
+          return reg.pushManager.getSubscription().then(function(s){ return s ? s.unsubscribe() : true; });
+        }));
+      }
+      if (!tasks.length) { finish(false); return; }
+      Promise.all(tasks.map(function(p){ return Promise.resolve(p).then(function(){ return true; }, function(){ return false; }); })).then(function(rs){ finish(rs.some(Boolean)); });
+    });
     notifyBtn.addEventListener('click', function(){
       notifyBtn.disabled = true;
       subscribeToPush();
@@ -2690,6 +2725,29 @@ details.faq-item>:not(summary){margin-bottom:16px;}
     });
   });
   var statusPushChk = document.getElementById('statusPushChk');
+  var alertsBtn = document.getElementById('alertsToggleBtn');
+  var alertsLbl = document.getElementById('alertsToggleState');
+  var alertsEnabled = true;
+  function paintAlertsSwitch(){
+    if (!alertsBtn) return;
+    alertsBtn.disabled = false;
+    alertsBtn.textContent = alertsEnabled ? 'Turn ALL alerts off' : 'Turn alerts back on';
+    if (alertsLbl) alertsLbl.textContent = alertsEnabled ? 'ON: new catches and status pushes go to everyone who signed up.' : 'OFF: nothing is sent to anyone (safe for testing).';
+  }
+  if (alertsBtn) {
+    db.collection('meta').doc('alerts').onSnapshot(function(s){
+      alertsEnabled = !(s.exists && s.data().enabled === false);
+      paintAlertsSwitch();
+    }, function(){ if (alertsLbl) alertsLbl.textContent = 'Could not read the switch.'; });
+    alertsBtn.addEventListener('click', function(){
+      var next = !alertsEnabled;
+      var q = next ? 'Turn push alerts back on for everyone who signed up?' : 'Turn OFF all push alerts (new catches and status alerts) for everyone? The banner on the site still works.';
+      if (!confirm(q)) return;
+      alertsBtn.disabled = true; alertsBtn.textContent = 'Saving\u2026';
+      db.collection('meta').doc('alerts').set({ enabled: next, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true })
+        .catch(function(){ alert('Could not save. Check your connection and try again.'); paintAlertsSwitch(); });
+    });
+  }
   function saveStatusBanner(text, btn, label, sendPush){
     if (btn && btn.disabled) return;
     if (sendPush) {
