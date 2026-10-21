@@ -265,6 +265,21 @@
 @media (prefers-reduced-motion:reduce){.rv-places li.pop{animation:none}}
 @media print{.rv{display:none !important}}
 </style>
+<style>/* photo slideshow */
+#phFiles{max-width:100%;min-width:0}
+.ph-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:12px}
+.ph-card{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--bg-card);display:flex;flex-direction:column}
+.ph-card img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:var(--bg-sunken)}
+.ph-meta{padding:6px 8px;display:flex;flex-direction:column;gap:2px;font-size:.78rem;overflow-wrap:anywhere}
+.ph-kind{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.ph-del{margin:0 8px 8px;align-self:flex-start;font:inherit;font-size:.75rem;background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:8px;padding:3px 9px;cursor:pointer}
+.sl-fig{margin:0;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.6vh;animation:slfade .8s ease}
+.sl-fig img{max-width:100%;max-height:68vh;object-fit:contain;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.45)}
+.sl-cap{font-family:'Bebas Neue',Impact,sans-serif;font-size:clamp(1.8rem,5.2vw,4.2rem);line-height:1.05}
+.sl-in{animation:slfade .8s ease;width:100%;display:flex;justify-content:center}
+@keyframes slfade{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.sl-fig,.sl-in{animation:none}}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -304,6 +319,18 @@
     <button type="button" id="rvNext" class="rv-btn rv-primary">Next</button>
   </div>
 </div>
+<div id="sl" class="rv no-print" hidden role="dialog" aria-label="Photo slideshow">
+  <div class="rv-stage" id="slStage"></div>
+  <div class="rv-bar">
+    <button type="button" id="slExit" class="rv-btn">Exit</button>
+    <button type="button" id="slFull" class="rv-btn">Full screen</button>
+    <button type="button" id="slPause" class="rv-btn">Pause</button>
+    <span id="slPos" style="color:#9FC3D6;font-size:.85rem;min-width:4rem;text-align:center;"></span>
+    <button type="button" id="slBack" class="rv-btn">Back</button>
+    <button type="button" id="slNext" class="rv-btn">Next</button>
+    <button type="button" id="slReveal" class="rv-btn rv-primary">Start winner reveal</button>
+  </div>
+</div>
 <div id="ceremonyContent" hidden>
 
     <section class="block">
@@ -319,6 +346,25 @@
       </div>
     </section>
 
+    <section class="block no-print" id="photoSection">
+      <div class="block-head">
+        <div class="block-kicker">While we wait</div>
+        <h2 class="display block-title">Photo Slideshow</h2>
+        <p class="block-desc">Photos of volunteers, donors, and the day, shown full screen with the donor thank-yous while people wait for the announcements. These only appear on this staff page and in the slideshow. Big phone photos are shrunk automatically.</p>
+      </div>
+      <div class="admin-row no-print">
+        <input type="file" id="phFiles" accept="image/*" multiple>
+        <select id="phKind" aria-label="Photo type"><option value="volunteer">Volunteer</option><option value="donor">Donor</option><option value="day">Day photo</option></select>
+        <input type="text" id="phCaption" maxlength="60" placeholder="Name or caption (optional)">
+        <button id="phUpload" class="btn btn-primary btn-sm" type="button">Add photos</button>
+      </div>
+      <p id="phStatus" class="block-desc" style="margin-top:8px;"></p>
+      <div id="phGrid" class="ph-grid"></div>
+      <div class="admin-row no-print" style="margin-top:12px;">
+        <button id="slideBtn" class="btn btn-primary btn-sm" type="button">Start photo slideshow</button>
+        <span class="block-desc" style="margin:0;">Starts full screen and loops by itself. From there you can jump into the winner reveal.</span>
+      </div>
+    </section>
     <section class="block">
       <div class="block-head">
         <div class="block-kicker">Say Thanks</div>
@@ -366,6 +412,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script>
 (function(){
   var firebaseConfig = {
@@ -549,6 +596,162 @@
   }
   wireAdd('newVolunteerName', 'newVolunteerNote', 'addVolunteerBtn', 'volunteers');
   wireAdd('newDonorName', 'newDonorNote', 'addDonorBtn', 'donors');
+  /* ---- photo slideshow (waiting screen) ---- */
+  (function(){
+    var PH_DOC = db.collection('meta').doc('ceremonyPhotos');
+    var storage = firebase.storage();
+    var MAXD = 1600, QUAL = 0.85;
+    var KIND_LABEL = { volunteer: 'Volunteer', donor: 'Donor', day: 'Day photo' };
+    var SHOW_LABEL = { volunteer: 'Thank you, volunteers', donor: 'Thank you, donors', day: 'Derby day' };
+    var items = [], unsub = null;
+    var grid = document.getElementById('phGrid'), statusEl = document.getElementById('phStatus');
+    if (!grid) return;
+
+    function renderGrid(){
+      if (!items.length) { grid.innerHTML = '<p class="lb-empty" style="grid-column:1/-1;">No photos yet.</p>'; return; }
+      grid.innerHTML = items.map(function(i){
+        return '<div class="ph-card"><img loading="lazy" src="' + escapeHtml(i.url) + '" alt=""><div class="ph-meta"><span class="ph-kind">' + escapeHtml(KIND_LABEL[i.kind] || i.kind) + '</span><span>' + escapeHtml(i.caption || '') + '</span></div><button type="button" class="ph-del" data-id="' + escapeHtml(i.id) + '" data-path="' + escapeHtml(i.path || '') + '">Remove</button></div>';
+      }).join('');
+    }
+    function setItems(arr){ items = (arr || []).slice().sort(function(a, b){ return (b.t || 0) - (a.t || 0); }); renderGrid(); }
+    auth.onAuthStateChanged(function(user){
+      if (user && !unsub) {
+        unsub = PH_DOC.onSnapshot(function(d){ setItems(d.exists ? d.data().items : []); }, function(err){ console.error('ceremony photos listen error', err); });
+      }
+    });
+
+    function resizeImage(file){
+      return new Promise(function(resolve, reject){
+        var img = new Image(), url = URL.createObjectURL(file);
+        img.onload = function(){
+          URL.revokeObjectURL(url);
+          var w = img.width, h = img.height, scale = Math.min(1, MAXD / Math.max(w, h));
+          var cw = Math.round(w * scale), ch = Math.round(h * scale);
+          var c = document.createElement('canvas'); c.width = cw; c.height = ch;
+          c.getContext('2d').drawImage(img, 0, 0, cw, ch);
+          c.toBlob(function(b){ if (b) resolve(b); else reject(new Error('toBlob failed')); }, 'image/jpeg', QUAL);
+        };
+        img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error('image load failed')); };
+        img.src = url;
+      });
+    }
+    var upBtn = document.getElementById('phUpload'), fileEl = document.getElementById('phFiles'), kindEl = document.getElementById('phKind'), capEl = document.getElementById('phCaption');
+    upBtn.addEventListener('click', function(){
+      var files = Array.prototype.slice.call(fileEl.files || []);
+      if (!files.length) { statusEl.textContent = 'Choose one or more photos first.'; return; }
+      var kind = kindEl.value, caption = capEl.value.trim().slice(0, 60);
+      upBtn.disabled = true; var done = 0, failed = 0;
+      statusEl.textContent = 'Uploading 0 of ' + files.length + '…';
+      files.reduce(function(chain, file){
+        return chain.then(function(){
+          return resizeImage(file).then(function(blob){
+            var id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+            var path = 'photos/ceremony/' + id + '.jpg';
+            var ref = storage.ref().child(path);
+            return ref.put(blob, { contentType: 'image/jpeg' }).then(function(){ return ref.getDownloadURL(); }).then(function(url){
+              return PH_DOC.set({ items: firebase.firestore.FieldValue.arrayUnion({ id: id, url: url, path: path, kind: kind, caption: caption, t: Date.now() }) }, { merge: true });
+            });
+          }).then(function(){ done++; }).catch(function(err){ failed++; console.error('ceremony photo upload failed', err); }).then(function(){
+            statusEl.textContent = 'Uploading ' + (done + failed) + ' of ' + files.length + '…';
+          });
+        });
+      }, Promise.resolve()).then(function(){
+        statusEl.textContent = done + ' photo' + (done === 1 ? '' : 's') + ' added' + (failed ? ', ' + failed + ' failed (check your signal and try again).' : '.');
+        fileEl.value = ''; capEl.value = ''; upBtn.disabled = false;
+      });
+    });
+    grid.addEventListener('click', function(e){
+      var b = e.target.closest ? e.target.closest('.ph-del') : null; if (!b) return;
+      if (!confirm('Remove this photo from the slideshow?')) return;
+      var id = b.getAttribute('data-id'), path = b.getAttribute('data-path');
+      db.runTransaction(function(tx){
+        return tx.get(PH_DOC).then(function(d){
+          var arr = (d.exists && d.data().items) || [];
+          tx.set(PH_DOC, { items: arr.filter(function(i){ return i.id !== id; }) }, { merge: true });
+        });
+      }).then(function(){ if (path) storage.ref().child(path).delete().catch(function(){}); }).catch(function(err){ alert('Could not remove the photo: ' + err.message); });
+    });
+
+    /* ---- the slideshow itself ---- */
+    var sl = document.getElementById('sl'), stage = document.getElementById('slStage'), pos = document.getElementById('slPos'), pauseBtn = document.getElementById('slPause');
+    var slides = [], idx = 0, paused = false, timer = null, wl = null;
+    function readNames(sel){
+      return Array.prototype.map.call(document.querySelectorAll(sel + ' .name-row'), function(li){
+        var a = li.querySelector('.name-main'), b = li.querySelector('.name-note');
+        return { name: a ? a.textContent.trim() : '', note: b ? b.textContent.trim() : '' };
+      }).filter(function(x){ return x.name; });
+    }
+    function chunk(arr, n){ var o = []; for (var i = 0; i < arr.length; i += n) o.push(arr.slice(i, i + n)); return o; }
+    function buildSlides(){
+      var q = { volunteer: [], donor: [], day: [] };
+      chunk(readNames('#volunteersList'), 12).forEach(function(p){ q.volunteer.push({ type: 'names', kind: 'volunteer', heading: 'Thank you, volunteers', names: p }); });
+      chunk(readNames('#donorsList'), 12).forEach(function(p){ q.donor.push({ type: 'names', kind: 'donor', heading: 'Thank you, donors', names: p }); });
+      items.slice().sort(function(a, b){ return (a.t || 0) - (b.t || 0); }).forEach(function(i){ (q[i.kind] || q.day).push({ type: 'photo', kind: i.kind, url: i.url, caption: i.caption || '' }); });
+      var out = [{ type: 'welcome' }], more = true, n = 0;
+      while (more) {
+        more = false;
+        ['volunteer', 'donor', 'day'].forEach(function(k){ if (q[k][n]) { out.push(q[k][n]); more = true; } });
+        n++;
+      }
+      return out;
+    }
+    var LOGO = '<img class="rv-logo" src="brand-mark.webp" alt="">';
+    function render(){
+      var s = slides[idx], h = '';
+      if (s.type === 'welcome') {
+        h = '<div class="rv-in sl-in">' + '<div class="rv-in">' + LOGO + '<div class="rv-kicker">Awards ceremony</div><div class="rv-h">Thank you for being here</div><div class="rv-sub">The announcements begin soon</div></div></div>';
+      } else if (s.type === 'names') {
+        var size = s.names.length <= 6 ? 'lg' : (s.names.length <= 10 ? 'md' : 'sm');
+        h = '<div class="sl-in"><div class="rv-in"><div class="rv-kicker">Thank you</div><div class="rv-h">' + escapeHtml(s.heading) + '</div><ul class="rv-names ' + size + '">' + s.names.map(function(n){ return '<li>' + escapeHtml(n.name) + (n.note ? '<em>' + escapeHtml(n.note) + '</em>' : '') + '</li>'; }).join('') + '</ul></div></div>';
+      } else {
+        h = '<figure class="sl-fig"><img src="' + escapeHtml(s.url) + '" alt="" onerror="this.style.display=\'none\'"><figcaption><div class="rv-kicker">' + escapeHtml(SHOW_LABEL[s.kind] || '') + '</div>' + (s.caption ? '<div class="sl-cap">' + escapeHtml(s.caption) + '</div>' : '') + '</figcaption></figure>';
+      }
+      stage.innerHTML = h;
+      pos.textContent = (idx + 1) + ' / ' + slides.length;
+      var nx = slides[(idx + 1) % slides.length]; if (nx && nx.type === 'photo') { var pre = new Image(); pre.src = nx.url; }
+      schedule();
+    }
+    function schedule(){
+      clearTimeout(timer);
+      if (paused) return;
+      var s = slides[idx];
+      timer = setTimeout(function(){ go(1); }, s.type === 'photo' ? 7000 : (s.type === 'welcome' ? 5000 : 9000));
+    }
+    function go(d){ idx = (idx + d + slides.length) % slides.length; render(); }
+    function wake(){ if (navigator.wakeLock && !wl) navigator.wakeLock.request('screen').then(function(l){ wl = l; l.addEventListener('release', function(){ wl = null; }); }).catch(function(){}); }
+    function openSl(){
+      slides = buildSlides(); idx = 0; paused = false; pauseBtn.textContent = 'Pause';
+      sl.hidden = false; document.documentElement.style.overflow = 'hidden';
+      render(); wake();
+    }
+    function closeSl(){
+      clearTimeout(timer); sl.hidden = true; document.documentElement.style.overflow = '';
+      try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen(); } catch (e) {}
+      if (wl) { try { wl.release(); } catch (e) {} wl = null; }
+    }
+    function togglePause(){ paused = !paused; pauseBtn.textContent = paused ? 'Play' : 'Pause'; if (paused) clearTimeout(timer); else schedule(); }
+    function toggleFs(){ try { if (document.fullscreenElement) document.exitFullscreen(); else if (sl.requestFullscreen) sl.requestFullscreen(); } catch (e) {} }
+    if (!sl.requestFullscreen) document.getElementById('slFull').hidden = true;
+    document.getElementById('slideBtn').addEventListener('click', openSl);
+    document.getElementById('slExit').addEventListener('click', closeSl);
+    document.getElementById('slFull').addEventListener('click', toggleFs);
+    pauseBtn.addEventListener('click', togglePause);
+    document.getElementById('slBack').addEventListener('click', function(){ go(-1); });
+    document.getElementById('slNext').addEventListener('click', function(){ go(1); });
+    document.getElementById('slReveal').addEventListener('click', function(){ closeSl(); var rb = document.getElementById('revealBtn'); if (rb) rb.click(); });
+    stage.addEventListener('click', function(){ go(1); });
+    document.addEventListener('visibilitychange', function(){ if (!document.hidden && !sl.hidden) wake(); });
+    document.addEventListener('keydown', function(e){
+      if (sl.hidden) return;
+      var tag = e.target && e.target.tagName, form = (tag === 'BUTTON' || tag === 'SELECT');
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); go(1); }
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(-1); }
+      else if (e.key === ' ' && !form) { e.preventDefault(); togglePause(); }
+      else if (e.key === 'Escape') { closeSl(); }
+      else if (e.key === 'f' || e.key === 'F') { toggleFs(); }
+    });
+  })();
+
   /* ---- reveal mode: full-screen winners slideshow ---- */
   (function(){
     var rv = document.getElementById('rv'), stage = document.getElementById('rvStage'), jump = document.getElementById('rvJump'), pos = document.getElementById('rvPos');
