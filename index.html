@@ -879,6 +879,16 @@ html.screen-mode #leaderboardGroups{display:grid;grid-template-columns:repeat(au
 html.screen-mode #screenExit{display:block;position:fixed;top:8px;right:8px;z-index:50;opacity:.35}
 html.screen-mode #screenExit:hover{opacity:1}
 </style>
+<style>/* donor strip, install button */
+#installBtn[hidden]{display:none !important;}
+#donorStrip{display:none}
+html.screen-mode #donorStrip.on{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;justify-content:center;align-items:baseline;gap:1.2rem;padding:.7rem 2.5vw;background:var(--bg,#0B2635);border-top:2px solid var(--accent2)}
+html.screen-mode #donorStrip .ds-label{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent2)}
+html.screen-mode #donorStrip .ds-name{font-size:1.5rem;font-weight:700;transition:opacity .5s}
+html.screen-mode.has-donors body{padding-bottom:4.5rem}
+html.screen-mode #screenHead>div{margin-right:13rem}
+</style>
+<script>window.__dip=null;window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__dip=e;document.dispatchEvent(new Event('dipready'));});</script>
 </head>
 <body>
 
@@ -965,6 +975,7 @@ html.screen-mode #screenExit:hover{opacity:1}
 <div id="screenHead"><h1>Hubbardston Ice Fishing Derby</h1><div><span id="screenClock"></span></div></div>
 <div id="drawWinnersScreen" hidden><div class="block-kicker">Hourly winners</div><ul class="win-list"></ul></div>
 <button type="button" id="screenExit" class="btn btn-ghost btn-sm">Exit big-screen view</button>
+<div id="donorStrip"><span class="ds-label">Thank you to our donors</span><span id="donorName" class="ds-name"></span></div>
 
 
   <section class="block" id="live">
@@ -977,6 +988,7 @@ html.screen-mode #screenExit:hover{opacity:1}
         <p id="notifyStatus" class="notify-status" hidden></p>
         <style>#notifyOffBtn[hidden]{display:none !important;}</style>
         <button type="button" id="notifyOffBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);margin-top:6px;" hidden>Turn off alerts on this phone</button>
+        <button type="button" id="installBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);margin-top:6px;" hidden>Install the app</button>
       </div>
     </div>
 
@@ -1473,6 +1485,10 @@ html.screen-mode #screenExit:hover{opacity:1}
           <span style="font-size:.82rem;color:var(--text-muted);width:100%;">Past Winners list — after the derby, save the final standings so they stay on the site for good (does not change the live leaderboard).</span>
           <input type="number" id="archiveYear" value="2027" min="2000" max="2100" style="width:6em;">
           <button id="archiveBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Save this year's results to Past Winners</button>
+        </div>
+        <div class="admin-row" style="flex-wrap:wrap;margin:0;">
+          <span style="font-size:.82rem;color:var(--text-muted);width:100%;">Results spreadsheet — downloads every active entry (time, category, angler, weight, current placing) as a CSV file that opens in Excel or Google Sheets.</span>
+          <button id="csvBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Download results (CSV)</button>
         </div>
         <div class="admin-row" style="flex-wrap:wrap;margin:0;">
               <span style="font-size:.82rem;color:var(--text-muted);width:100%;">Hourly drawing amounts ($) — leave a box blank to leave that hour as TBD:</span>
@@ -2875,6 +2891,63 @@ html.screen-mode #screenExit:hover{opacity:1}
     }).catch(function(err){ alert('Could not save: ' + err.message); }).then(function(){
       arBtn.disabled = false; arBtn.textContent = "Save this year's results to Past Winners";
     });
+  });
+
+  /* ---- install button, donor strip, results CSV ---- */
+  (function(){
+    var btn = document.getElementById('installBtn');
+    if (!btn) return;
+    function standalone(){ return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; }
+    function show(){ if (window.__dip && !standalone()) btn.hidden = false; }
+    document.addEventListener('dipready', show);
+    show();
+    window.addEventListener('appinstalled', function(){ window.__dip = null; btn.hidden = true; });
+    btn.addEventListener('click', function(){
+      var ev = window.__dip; if (!ev) return;
+      ev.prompt();
+      ev.userChoice.then(function(){ window.__dip = null; btn.hidden = true; }).catch(function(){});
+    });
+  })();
+
+  (function(){
+    var strip = document.getElementById('donorStrip'), nm = document.getElementById('donorName');
+    if (!strip || !nm) return;
+    var names = Array.prototype.map.call(document.querySelectorAll('.sponsor-slot--filled .sponsor-name'), function(n){ return n.textContent.trim(); }).filter(Boolean);
+    if (!names.length) return;
+    strip.classList.add('on');
+    document.documentElement.classList.add('has-donors');
+    var i = 0; nm.textContent = names[0];
+    if (names.length > 1) setInterval(function(){
+      nm.style.opacity = 0;
+      setTimeout(function(){ i = (i + 1) % names.length; nm.textContent = names[i]; nm.style.opacity = 1; }, 500);
+    }, 6000);
+  })();
+
+  function buildResultsCsv(vis){
+    function q(v, guard){ v = String(v == null ? '' : v); if (guard && /^[=+\-@\t\r]/.test(v)) v = "'" + v; return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+    function key(e){ return (e.id || '') + '|' + e.category + '|' + e.angler + '|' + e.weight + '|' + entryTime(e); }
+    var byCat = {}; vis.forEach(function(e){ (byCat[e.category] = byCat[e.category] || []).push(e); });
+    var placing = {};
+    CATEGORY_ORDER.forEach(function(cat){ rankedForCategory(byCat, cat).forEach(function(e, i){ (placing[key(e)] = placing[key(e)] || []).push(cat + ' #' + (i + 1)); }); });
+    var rows = vis.slice().sort(function(a, b){ return entryTime(a) - entryTime(b); });
+    var out = ['Time (Eastern),Category,Angler,Weight (lb),Current placing'];
+    rows.forEach(function(e){
+      var when = '';
+      if (e.createdAt && e.createdAt.toDate) { when = e.createdAt.toDate().toLocaleString('en-CA', { timeZone: 'America/New_York', hour12: false }).replace(',', ''); }
+      out.push([q(when), q(e.category, true), q(e.angler, true), q(e.weight), q((placing[key(e)] || []).join('; '))].join(','));
+    });
+    return out.join('\r\n') + '\r\n';
+  }
+  var csvBtn = document.getElementById('csvBtn');
+  if (csvBtn) csvBtn.addEventListener('click', function(){
+    var vis = (latestEntries || []).filter(function(e){ return !e.deleted; });
+    if (!vis.length) { alert('There are no entries to download yet.'); return; }
+    var blob = new Blob(['﻿' + buildResultsCsv(vis)], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'derby-results-' + new Date().toISOString().slice(0, 10) + '.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
   });
 
   var alertsBtn = document.getElementById('alertsToggleBtn');
