@@ -224,6 +224,47 @@
     .name-row{break-inside:avoid;}
   }
 </style>
+<style>/* reveal mode */
+.rv{position:fixed;inset:0;z-index:9999;background:#0B2635;color:#EEF5F9;display:flex;flex-direction:column;font-family:'Libre Franklin',system-ui,sans-serif}
+.rv[hidden]{display:none}
+.rv-stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:3vh 4vw;text-align:center;overflow:hidden;cursor:pointer}
+.rv-in{width:100%;max-width:78rem;display:flex;flex-direction:column;align-items:center}
+.rv-logo{height:clamp(3rem,12vh,7rem);width:auto;margin-bottom:1.2vh}
+.rv-kicker{font-size:clamp(.8rem,1.7vw,1.5rem);letter-spacing:.14em;text-transform:uppercase;color:#F09A42;font-weight:700}
+.rv-h{font-family:'Bebas Neue',Impact,sans-serif;font-weight:400;font-size:clamp(2.4rem,8.5vw,7.5rem);line-height:1;margin:.1em 0 .25em;text-wrap:balance}
+.rv-sub{font-size:clamp(1rem,2.4vw,2rem);color:#9FC3D6}
+.rv-big{font-family:'Bebas Neue',Impact,sans-serif;font-size:clamp(4rem,18vw,15rem);line-height:1;color:#F09A42;font-variant-numeric:tabular-nums}
+.rv-places{list-style:none;margin:0;padding:0;display:grid;gap:clamp(.4rem,1.5vh,1.1rem);width:100%}
+.rv-places li{display:grid;grid-template-columns:clamp(3.4rem,9vw,8rem) 1fr auto;align-items:baseline;gap:clamp(.5rem,1.5vw,1.4rem);padding:clamp(.5rem,1.8vh,1.2rem) clamp(.8rem,2vw,2rem);border:2px solid #204053;border-radius:14px;background:#122E3D;text-align:left}
+.rv-places li.first{border-color:#F09A42}
+.rv-pl{font-family:'Bebas Neue',Impact,sans-serif;font-size:clamp(1.6rem,4.6vw,3.8rem);color:#F09A42;line-height:1}
+.rv-nm{font-weight:800;font-size:clamp(1.3rem,4.4vw,3.6rem);line-height:1.1;overflow-wrap:anywhere}
+.rv-places li.hid .rv-nm{color:#35586c;font-weight:700;letter-spacing:.2em}
+.rv-wt{font-variant-numeric:tabular-nums;font-size:clamp(1.1rem,3vw,2.5rem);color:#9FC3D6;white-space:nowrap}
+.rv-yt{font-style:normal;font-size:.35em;letter-spacing:.08em;text-transform:uppercase;color:#7CC4E0;border:1px solid #7CC4E0;border-radius:99px;padding:.1em .6em;margin-left:.7em;vertical-align:middle}
+.rv-names{list-style:none;margin:.6em 0 0;padding:0;width:100%;text-align:left;column-gap:3vw}
+.rv-names li{break-inside:avoid;padding:.25em 0;font-weight:700;border-bottom:1px solid #204053}
+.rv-names li em{display:block;font-style:normal;font-weight:500;color:#9FC3D6;font-size:.62em}
+.rv-names.lg{columns:1;font-size:clamp(1.4rem,4.2vw,3.4rem);text-align:center}
+.rv-names.md{columns:2;font-size:clamp(1.1rem,2.8vw,2.3rem)}
+.rv-names.sm{columns:3;font-size:clamp(.95rem,2vw,1.7rem)}
+.rv-hours{list-style:none;margin:.6em 0 0;padding:0;width:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:clamp(.5rem,1.4vw,1.1rem)}
+.rv-hours li{background:#122E3D;border:2px solid #204053;border-radius:14px;padding:.7em .9em;text-align:left;display:flex;flex-direction:column;gap:.15em}
+.rv-hours b{font-size:clamp(.8rem,1.5vw,1.2rem);letter-spacing:.1em;text-transform:uppercase;color:#F09A42}
+.rv-hours span{font-weight:800;font-size:clamp(1.2rem,3vw,2.4rem);overflow-wrap:anywhere}
+.rv-bar{display:flex;gap:.6rem;align-items:center;justify-content:center;flex-wrap:wrap;padding:.7rem 1rem;background:#0A1D28;border-top:1px solid #204053;opacity:.3;transition:opacity .2s}
+.rv-bar:hover,.rv-bar:focus-within{opacity:1}
+@media (hover:none){.rv-bar{opacity:1}}
+.rv-btn,.rv-bar select{font:inherit;font-weight:700;min-height:3rem;padding:.6rem 1.2rem;border-radius:12px;border:2px solid #204053;background:#122E3D;color:#EEF5F9;cursor:pointer}
+.rv-primary{background:#F09A42;border-color:#F09A42;color:#2A1600;flex:1 1 9rem;max-width:16rem}
+.rv-bar select{max-width:11rem}
+#rvPos{color:#9FC3D6;font-size:.85rem;min-width:5.5rem;text-align:center}
+#rvConfetti{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+@keyframes rvpop{0%{transform:scale(.85);opacity:0}60%{transform:scale(1.04);opacity:1}100%{transform:scale(1);opacity:1}}
+.rv-places li.pop{animation:rvpop .6s ease-out}
+@media (prefers-reduced-motion:reduce){.rv-places li.pop{animation:none}}
+@media print{.rv{display:none !important}}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -251,7 +292,19 @@
     </div>
   </div>
 
-  <div id="ceremonyContent" hidden>
+  <div id="rv" class="rv no-print" hidden role="dialog" aria-label="Awards reveal">
+  <div class="rv-stage" id="rvStage"></div>
+  <canvas id="rvConfetti"></canvas>
+  <div class="rv-bar">
+    <button type="button" id="rvExit" class="rv-btn">Exit</button>
+    <button type="button" id="rvFull" class="rv-btn">Full screen</button>
+    <select id="rvJump" aria-label="Jump to"></select>
+    <span id="rvPos"></span>
+    <button type="button" id="rvBack" class="rv-btn">Back</button>
+    <button type="button" id="rvNext" class="rv-btn rv-primary">Next</button>
+  </div>
+</div>
+<div id="ceremonyContent" hidden>
 
     <section class="block">
       <div class="block-head">
@@ -260,7 +313,8 @@
         <p class="block-desc">A quick reference for the MC: acknowledge volunteers and donors first, then run down winners by category. Add or remove names any time &mdash; changes save instantly and show up here on any device.</p>
       </div>
       <div class="admin-row no-print">
-        <button id="printBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Print This Page</button>
+        <button id="revealBtn" class="btn btn-primary btn-sm" type="button" title="Full-screen winner reveal for the TV or your phone">Start reveal mode</button>
+      <button id="printBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Print This Page</button>
         <button id="staffSignOut" class="staff-signout" type="button">Sign out</button>
       </div>
     </section>
@@ -495,6 +549,136 @@
   }
   wireAdd('newVolunteerName', 'newVolunteerNote', 'addVolunteerBtn', 'volunteers');
   wireAdd('newDonorName', 'newDonorNote', 'addDonorBtn', 'donors');
+  /* ---- reveal mode: full-screen winners slideshow ---- */
+  (function(){
+    var rv = document.getElementById('rv'), stage = document.getElementById('rvStage'), jump = document.getElementById('rvJump'), pos = document.getElementById('rvPos');
+    var startBtn = document.getElementById('revealBtn');
+    if (!rv || !stage || !startBtn) return;
+    var slides = [], idx = 0, step = 0, wl = null;
+    var HW = [['7am','7 AM'],['8am','8 AM'],['9am','9 AM'],['10am','10 AM'],['11am','11 AM'],['noon','Noon'],['1pm','1 PM'],['2pm','2 PM']];
+    function firstText(el){ var n = el && el.childNodes[0]; return n ? n.textContent.trim() : ''; }
+    function readWinners(){
+      return Array.prototype.map.call(document.querySelectorAll('#winnersGroups .cat-card'), function(card){
+        var rows = Array.prototype.map.call(card.querySelectorAll('.fin-row'), function(r){
+          var nm = r.querySelector('.fin-name'), rk = r.querySelector('.fin-rank'), wt = r.querySelector('.fin-weight');
+          return { rank: rk ? rk.textContent.trim() : '', name: firstText(nm), fromYouth: !!(nm && nm.querySelector('.youth-tag')), weight: wt ? wt.textContent.trim() : '' };
+        });
+        return { title: firstText(card.querySelector('h3')), youth: !!card.querySelector('h3 .youth-tag'), rows: rows };
+      }).filter(function(c){ return c.rows.length; });
+    }
+    function readNames(sel){
+      return Array.prototype.map.call(document.querySelectorAll(sel + ' .name-row'), function(li){
+        var a = li.querySelector('.name-main'), b = li.querySelector('.name-note');
+        return { name: a ? a.textContent.trim() : '', note: b ? b.textContent.trim() : '' };
+      }).filter(function(x){ return x.name; });
+    }
+    function chunk(arr, n){ var out = []; for (var i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n)); return out; }
+    function buildSlides(hw, pot){
+      var s = [{ type: 'title', label: 'Welcome' }];
+      [['Volunteers', 'Thank you, volunteers', '#volunteersList'], ['Donors', 'Thank you, donors', '#donorsList']].forEach(function(g){
+        var pages = chunk(readNames(g[2]), 16);
+        pages.forEach(function(p, i){ s.push({ type: 'thanks', label: g[0] + (pages.length > 1 ? ' ' + (i + 1) + '/' + pages.length : ''), heading: g[1], names: p }); });
+      });
+      var items = HW.filter(function(h){ return hw && hw[h[0]]; }).map(function(h){ return { t: h[1], n: hw[h[0]] }; });
+      if (items.length) s.push({ type: 'hourly', label: 'Hourly drawings', items: items });
+      readWinners().forEach(function(c){ s.push({ type: 'cat', label: c.title, title: c.title, youth: c.youth, rows: c.rows }); });
+      if (pot > 0) s.push({ type: 'raffle', label: '50/50 raffle', pot: pot });
+      s.push({ type: 'end', label: 'Thank you' });
+      return s;
+    }
+    function confetti(){
+      try {
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        var c = document.getElementById('rvConfetti'); if (!c) return;
+        var ctx = c.getContext('2d'); c.width = c.clientWidth; c.height = c.clientHeight;
+        var cols = ['#F09A42', '#EEF5F9', '#7CC4E0', '#E07A1E'], ps = [];
+        for (var i = 0; i < 140; i++) ps.push({ x: c.width / 2 + (Math.random() - .5) * c.width * .4, y: c.height * .45, vx: (Math.random() - .5) * 14, vy: -Math.random() * 14 - 4, s: 5 + Math.random() * 7, c: cols[i % 4], r: Math.random() * 6 });
+        var t0 = performance.now();
+        (function f(t){
+          ctx.clearRect(0, 0, c.width, c.height);
+          ps.forEach(function(p){ p.vy += .35; p.x += p.vx; p.y += p.vy; p.r += .2; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * .6); ctx.restore(); });
+          if (t - t0 < 2600) requestAnimationFrame(f); else ctx.clearRect(0, 0, c.width, c.height);
+        })(t0);
+      } catch (e) {}
+    }
+    var LOGO = '<img class="rv-logo" src="brand-mark.webp" alt="">';
+    function render(){
+      var s = slides[idx], h = '';
+      if (s.type === 'title') {
+        h = '<div class="rv-in">' + LOGO + '<div class="rv-kicker">Awards ceremony</div><div class="rv-h">Hubbardston Ice Fishing Derby</div><div class="rv-sub">Let’s meet our winners</div></div>';
+      } else if (s.type === 'thanks') {
+        var size = s.names.length <= 6 ? 'lg' : (s.names.length <= 10 ? 'md' : 'sm');
+        h = '<div class="rv-in"><div class="rv-kicker">Thank you</div><div class="rv-h">' + escapeHtml(s.heading) + '</div><ul class="rv-names ' + size + '">' + s.names.map(function(n){ return '<li>' + escapeHtml(n.name) + (n.note ? '<em>' + escapeHtml(n.note) + '</em>' : '') + '</li>'; }).join('') + '</ul></div>';
+      } else if (s.type === 'hourly') {
+        h = '<div class="rv-in"><div class="rv-kicker">Cash drawings</div><div class="rv-h">Hourly winners</div><ul class="rv-hours">' + s.items.map(function(i){ return '<li><b>' + i.t + '</b><span>' + escapeHtml(i.n) + '</span></li>'; }).join('') + '</ul></div>';
+      } else if (s.type === 'cat') {
+        var n = s.rows.length;
+        h = '<div class="rv-in"><div class="rv-kicker">' + (s.youth ? 'Youth division · 12 &amp; under' : 'Open division') + '</div><div class="rv-h">' + escapeHtml(s.title) + '</div><ol class="rv-places">' + s.rows.map(function(r, i){
+          var shown = i >= n - step, latest = shown && i === n - step;
+          return '<li class="' + (shown ? 'on' : 'hid') + (latest ? ' pop' : '') + (i === 0 ? ' first' : '') + '"><span class="rv-pl">' + escapeHtml(r.rank) + '</span><span class="rv-nm">' + (shown ? escapeHtml(r.name) + (r.fromYouth ? '<i class="rv-yt">Youth</i>' : '') : '• • •') + '</span><span class="rv-wt">' + (shown ? escapeHtml(r.weight) : '') + '</span></li>';
+        }).join('') + '</ol></div>';
+      } else if (s.type === 'raffle') {
+        h = '<div class="rv-in"><div class="rv-kicker">50/50 Raffle</div><div class="rv-h">The pot</div><div class="rv-big">$' + Number(s.pot).toLocaleString('en-US', { maximumFractionDigits: 2 }) + '</div></div>';
+      } else {
+        h = '<div class="rv-in">' + LOGO + '<div class="rv-h">Thank you for fishing with us!</div><div class="rv-sub">Congratulations to all of our winners.</div></div>';
+      }
+      stage.innerHTML = h;
+      jump.value = String(idx);
+      pos.textContent = (idx + 1) + ' / ' + slides.length + (s.type === 'cat' ? ' · ' + step + '/' + s.rows.length : '');
+    }
+    function next(){
+      var s = slides[idx];
+      if (s.type === 'cat' && step < s.rows.length) { step++; render(); if (step === s.rows.length) confetti(); }
+      else if (idx < slides.length - 1) { idx++; step = 0; render(); }
+    }
+    function back(){
+      var s = slides[idx];
+      if (s.type === 'cat' && step > 0) { step--; render(); }
+      else if (idx > 0) { idx--; var p = slides[idx]; step = p.type === 'cat' ? p.rows.length : 0; render(); }
+    }
+    function wake(){ if (navigator.wakeLock && !wl) navigator.wakeLock.request('screen').then(function(l){ wl = l; l.addEventListener('release', function(){ wl = null; }); }).catch(function(){}); }
+    function openRv(){
+      idx = 0; step = 0;
+      jump.innerHTML = slides.map(function(s, i){ return '<option value="' + i + '">' + escapeHtml(s.label) + '</option>'; }).join('');
+      rv.hidden = false; document.documentElement.style.overflow = 'hidden';
+      render(); wake();
+    }
+    function closeRv(){
+      rv.hidden = true; document.documentElement.style.overflow = '';
+      try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen(); } catch (e) {}
+      if (wl) { try { wl.release(); } catch (e) {} wl = null; }
+    }
+    function toggleFs(){ try { if (document.fullscreenElement) document.exitFullscreen(); else if (rv.requestFullscreen) rv.requestFullscreen(); } catch (e) {} }
+    if (!rv.requestFullscreen) document.getElementById('rvFull').hidden = true;
+    document.getElementById('rvNext').addEventListener('click', next);
+    document.getElementById('rvBack').addEventListener('click', back);
+    document.getElementById('rvExit').addEventListener('click', closeRv);
+    document.getElementById('rvFull').addEventListener('click', toggleFs);
+    stage.addEventListener('click', next);
+    jump.addEventListener('change', function(){ idx = parseInt(jump.value, 10) || 0; step = 0; render(); jump.blur(); });
+    document.addEventListener('visibilitychange', function(){ if (!document.hidden && !rv.hidden) wake(); });
+    document.addEventListener('keydown', function(e){
+      if (rv.hidden) return;
+      var tag = e.target && e.target.tagName, form = (tag === 'BUTTON' || tag === 'SELECT');
+      if (e.key === 'ArrowRight' || e.key === 'PageDown' || ((e.key === ' ' || e.key === 'Enter') && !form)) { e.preventDefault(); next(); }
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || e.key === 'Backspace') { e.preventDefault(); back(); }
+      else if (e.key === 'Escape') { closeRv(); }
+      else if (e.key === 'f' || e.key === 'F') { toggleFs(); }
+    });
+    function tmo(p){ return Promise.race([p, new Promise(function(r){ setTimeout(r, 4000); })]); }
+    startBtn.addEventListener('click', function(){
+      startBtn.disabled = true; startBtn.textContent = 'Loading…';
+      var hw = {}, pot = 0;
+      Promise.all([
+        tmo(db.collection('meta').doc('hourlyWinners').get().then(function(d){ if (d.exists) hw = d.data(); }).catch(function(){})),
+        tmo(db.collection('meta').doc('raffle').get().then(function(d){ if (d.exists) pot = Number(d.data().total) || 0; }).catch(function(){}))
+      ]).then(function(){
+        slides = buildSlides(hw, pot);
+        openRv();
+      }).catch(function(){}).then(function(){ startBtn.disabled = false; startBtn.textContent = 'Start reveal mode'; });
+    });
+  })();
+
 })();
 </script>
 </body>
