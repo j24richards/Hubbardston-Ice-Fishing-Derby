@@ -853,6 +853,32 @@ details.faq-item[open]>summary::after{content:'\2212';}
 details.faq-item>:not(summary){margin-bottom:16px;}
 </style>
 <style>/* phone fix: keep the staff admin panel inside the screen */@media (max-width:700px){#adminCatEditor,.staff-box>*{min-width:0;max-width:100%}.admin-entry-row{min-width:0}#prizeFiles,.admin-row input[type=file]{max-width:100%;min-width:0;box-sizing:border-box}}</style>
+<style>/* big screen, hourly winners, past winners */
+#screenHead,#drawWinnersScreen,#screenExit{display:none}
+.win-list{list-style:none;margin:8px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.win-list li{background:rgba(127,127,127,.12);border:1px solid var(--border);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:2px}
+.win-list li b{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent2)}
+.win-list li span{font-weight:700}
+.pw-year{margin-top:22px}.pw-year h3{font-size:1.4rem;margin:0 0 10px}
+.pw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.pw-card{border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:rgba(127,127,127,.08)}
+.pw-card h4{margin:0 0 8px;font-size:.9rem}
+.pw-card ol{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.pw-card li{display:flex;gap:8px;align-items:baseline}
+.pw-place{font-family:monospace;color:var(--accent2);font-weight:700;width:1.2em}
+.pw-name{flex:1}.pw-name em{font-size:.7rem;font-style:normal;color:var(--accent2)}
+.pw-wt{font-variant-numeric:tabular-nums;color:var(--text-muted)}
+html.screen-mode{font-size:clamp(18px,1.5vw,32px)}
+html.screen-mode .hero,html.screen-mode .jump-nav,html.screen-mode footer,html.screen-mode body>div.wrap>section:not(#live):not(#raffle-pot),html.screen-mode .notify-banner,html.screen-mode #findBox,html.screen-mode .lb-row button,html.screen-mode #live .block-desc{display:none !important}
+html.screen-mode body>div.wrap{max-width:none;padding-inline:2.5vw}
+html.screen-mode #screenHead{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;padding:1rem 2.5vw .4rem;border-bottom:2px solid var(--accent2)}
+html.screen-mode #screenHead h1{margin:0;font-size:2.2rem;line-height:1.1}
+html.screen-mode #screenClock{font-family:monospace;font-size:1.6rem}
+html.screen-mode #drawWinnersScreen:not([hidden]){display:block;margin:.8rem 0}
+html.screen-mode #leaderboardGroups{display:grid;grid-template-columns:repeat(auto-fit,minmax(20rem,1fr));gap:1.2rem}
+html.screen-mode #screenExit{display:block;position:fixed;top:8px;right:8px;z-index:50;opacity:.35}
+html.screen-mode #screenExit:hover{opacity:1}
+</style>
 </head>
 <body>
 
@@ -936,6 +962,10 @@ details.faq-item>:not(summary){margin-bottom:16px;}
 </nav>
 
 <div class="wrap">
+<div id="screenHead"><h1>Hubbardston Ice Fishing Derby</h1><div><span id="screenClock"></span></div></div>
+<div id="drawWinnersScreen" hidden><div class="block-kicker">Hourly winners</div><ul class="win-list"></ul></div>
+<button type="button" id="screenExit" class="btn btn-ghost btn-sm">Exit big-screen view</button>
+
 
   <section class="block" id="live">
     <div class="block-head">
@@ -1179,7 +1209,8 @@ details.faq-item>:not(summary){margin-bottom:16px;}
     </ol>
 
     <div class="block-kicker" style="margin-top:28px;">Hourly Cash Drawings</div>
-    <p id="drawNote" class="draw-note">Cash drawings run every hour from 7 AM to 2 PM &mdash; amounts will be posted here.</p>
+    <div id="drawWinners" hidden><p class="draw-note" style="margin-bottom:0;">Winners so far:</p><ul class="win-list"></ul></div>
+      <p id="drawNote" class="draw-note">Cash drawings run every hour from 7 AM to 2 PM &mdash; amounts will be posted here.</p>
     <div id="drawGrid" class="logistics-grid" hidden style="grid-template-columns:repeat(auto-fill,minmax(90px,1fr));margin-top:12px;">
       <div class="logi-card"><h4>7 AM</h4><p id="draw-7am">TBD</p></div>
       <div class="logi-card"><h4>8 AM</h4><p id="draw-8am">TBD</p></div>
@@ -1272,7 +1303,8 @@ details.faq-item>:not(summary){margin-bottom:16px;}
     <p class="volunteer-note">Want to lend a hand next year? <a href="https://www.hubbardstonrodandgun.com/contact-us.html" target="_blank" rel="noopener">Let the club know</a> — we always need more hands.</p>
   </section>
 
-  <section class="block" id="faq">
+  <section id="past-winners" class="block" hidden><div class="block-head"><div class="block-kicker">Hall of fame</div><h2 class="block-title">Past Winners</h2></div><div id="pastWinnersBody"></div></section>
+<section class="block" id="faq">
     <div class="block-head">
       <div class="block-kicker">Good To Know</div>
       <h2 class="block-title">FAQ</h2>
@@ -1373,7 +1405,7 @@ details.faq-item>:not(summary){margin-bottom:16px;}
     </div>
 
     <div class="staff-panel">
-      <button id="staffToggle" class="footer-login-link" type="button">Admin Login</button>
+      <a href="#screen" class="footer-login-link" style="margin-right:1rem;">Big-screen view</a> <button id="staffToggle" class="footer-login-link" type="button">Admin Login</button>
       <div id="staffLoginBox" class="staff-box" hidden>
         <input type="password" id="staffPassword" placeholder="Staff password" autocapitalize="off" autocorrect="off" spellcheck="false">
         <button id="staffSignIn" class="btn btn-primary btn-sm" type="button">Sign In</button>
@@ -1426,6 +1458,23 @@ details.faq-item>:not(summary){margin-bottom:16px;}
               <button id="updateRaffleBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Update Total</button>
             </div>
             <div class="admin-row" style="flex-wrap:wrap;margin:0;">
+          <span style="font-size:.82rem;color:var(--text-muted);width:100%;">Hourly drawing winners — type each name after the draw, then Save. Clear a box and Save to remove that winner.</span>
+          <input type="text" maxlength="40" class="winInput" data-slot="7am" placeholder="7 AM winner" style="width:9em;">
+          <input type="text" maxlength="40" class="winInput" data-slot="8am" placeholder="8 AM winner" style="width:9em;">
+          <input type="text" maxlength="40" class="winInput" data-slot="9am" placeholder="9 AM winner" style="width:9em;">
+          <input type="text" maxlength="40" class="winInput" data-slot="10am" placeholder="10 AM winner" style="width:9em;">
+          <input type="text" maxlength="40" class="winInput" data-slot="11am" placeholder="11 AM winner" style="width:9em;">
+          <input type="text" maxlength="40" class="winInput" data-slot="noon" placeholder="Noon winner" style="width:9em;">
+          <input type="text" maxlength="40" class="winInput" data-slot="1pm" placeholder="1 PM winner" style="width:9em;">
+          <input type="text" maxlength="40" class="winInput" data-slot="2pm" placeholder="2 PM winner" style="width:9em;">
+          <button id="saveWinnersBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Save Winners</button>
+        </div>
+        <div class="admin-row" style="flex-wrap:wrap;margin:0;">
+          <span style="font-size:.82rem;color:var(--text-muted);width:100%;">Past Winners list — after the derby, save the final standings so they stay on the site for good (does not change the live leaderboard).</span>
+          <input type="number" id="archiveYear" value="2027" min="2000" max="2100" style="width:6em;">
+          <button id="archiveBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Save this year's results to Past Winners</button>
+        </div>
+        <div class="admin-row" style="flex-wrap:wrap;margin:0;">
               <span style="font-size:.82rem;color:var(--text-muted);width:100%;">Hourly drawing amounts ($) — leave a box blank to leave that hour as TBD:</span>
               <input type="number" step="1" class="drawInput" data-slot="7am" placeholder="7 AM" style="width:6em;">
               <input type="number" step="1" class="drawInput" data-slot="8am" placeholder="8 AM" style="width:6em;">
@@ -2726,6 +2775,108 @@ details.faq-item>:not(summary){margin-bottom:16px;}
     });
   });
   var statusPushChk = document.getElementById('statusPushChk');
+  /* ---- big screen, hourly winners, past winners ---- */
+  (function(){
+    var root = document.documentElement, wl = null;
+    function wake(){
+      if (!(navigator.wakeLock && root.classList.contains('screen-mode')) || wl) return;
+      navigator.wakeLock.request('screen').then(function(l){ wl = l; l.addEventListener('release', function(){ wl = null; }); }).catch(function(){});
+    }
+    function applyScreen(){
+      var on = (location.hash === '#screen');
+      root.classList.toggle('screen-mode', on);
+      if (on) { window.scrollTo(0, 0); wake(); }
+      else if (wl) { try { wl.release(); } catch(e) {} wl = null; }
+    }
+    window.addEventListener('hashchange', applyScreen);
+    document.addEventListener('visibilitychange', function(){ if (!document.hidden) wake(); });
+    var exitBtn = document.getElementById('screenExit');
+    if (exitBtn) exitBtn.addEventListener('click', function(){ history.replaceState(null, '', location.pathname); applyScreen(); });
+    var clk = document.getElementById('screenClock');
+    function tick(){ if (clk) clk.textContent = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); }
+    tick(); setInterval(tick, 10000);
+    applyScreen();
+  })();
+
+  var HW_SLOTS = ['7am','8am','9am','10am','11am','noon','1pm','2pm'];
+  var HW_LABELS = { '7am':'7 AM', '8am':'8 AM', '9am':'9 AM', '10am':'10 AM', '11am':'11 AM', 'noon':'Noon', '1pm':'1 PM', '2pm':'2 PM' };
+  function hwRender(data){
+    data = data || {};
+    var items = HW_SLOTS.filter(function(s){ return data[s]; }).map(function(s){
+      return '<li><b>' + HW_LABELS[s] + '</b><span>' + escapeHtml(data[s]) + '</span></li>';
+    }).join('');
+    ['drawWinners', 'drawWinnersScreen'].forEach(function(id){
+      var box = document.getElementById(id); if (!box) return;
+      var ul = box.querySelector('ul'); if (ul) ul.innerHTML = items;
+      box.hidden = !items;
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.winInput'), function(inp){
+      if (inp === document.activeElement || inp.dataset.dirty === '1') return;
+      inp.value = data[inp.getAttribute('data-slot')] || '';
+    });
+  }
+  db.collection('meta').doc('hourlyWinners').onSnapshot(function(s){ hwRender(s.exists ? s.data() : {}); }, function(){});
+  document.addEventListener('input', function(e){
+    if (e.target && e.target.classList && e.target.classList.contains('winInput')) e.target.dataset.dirty = '1';
+  });
+  var hwBtn = document.getElementById('saveWinnersBtn');
+  if (hwBtn) hwBtn.addEventListener('click', function(){
+    var upd = {};
+    Array.prototype.forEach.call(document.querySelectorAll('.winInput'), function(inp){
+      var v = inp.value.trim().slice(0, 40);
+      upd[inp.getAttribute('data-slot')] = v ? v : firebase.firestore.FieldValue.delete();
+    });
+    hwBtn.disabled = true; hwBtn.textContent = 'Saving…';
+    db.collection('meta').doc('hourlyWinners').set(upd, { merge: true }).then(function(){
+      Array.prototype.forEach.call(document.querySelectorAll('.winInput'), function(i){ i.dataset.dirty = ''; });
+    }).catch(function(err){ alert('Could not save winners: ' + err.message); }).then(function(){
+      hwBtn.disabled = false; hwBtn.textContent = 'Save Winners';
+    });
+  });
+
+  function loadPastWinners(){
+    var sec = document.getElementById('past-winners'), body = document.getElementById('pastWinnersBody');
+    if (!sec || !body) return;
+    var FP = firebase.firestore.FieldPath;
+    db.collection('meta').where(FP.documentId(), '>=', 'archive_').where(FP.documentId(), '<', 'archive_').get().then(function(snap){
+      var docs = snap.docs.map(function(d){ return d.data(); }).filter(function(d){ return d && d.results; }).sort(function(a, b){ return b.year - a.year; });
+      if (!docs.length) { sec.hidden = true; return; }
+      body.innerHTML = docs.map(function(d){
+        var cards = CATEGORY_ORDER.filter(function(c){ return d.results[c]; }).map(function(c){
+          var rows = d.results[c].map(function(r){
+            return '<li><span class="pw-place">' + r.place + '</span><span class="pw-name">' + escapeHtml(r.angler) + (r.fromYouth ? ' <em>Youth</em>' : '') + '</span><span class="pw-wt">' + Number(r.weight).toFixed(2) + ' lb</span></li>';
+          }).join('');
+          return '<div class="pw-card"><h4>' + escapeHtml(c) + '</h4><ol>' + rows + '</ol></div>';
+        }).join('');
+        return '<div class="pw-year"><h3>' + escapeHtml(String(d.year)) + '</h3><div class="pw-grid">' + cards + '</div></div>';
+      }).join('');
+      sec.hidden = false;
+    }).catch(function(){});
+  }
+  loadPastWinners();
+
+  var arBtn = document.getElementById('archiveBtn'), arYear = document.getElementById('archiveYear');
+  if (arBtn) arBtn.addEventListener('click', function(){
+    var year = parseInt(arYear.value, 10);
+    if (!(year >= 2000 && year <= 2100)) { alert('Enter a four-digit year.'); return; }
+    var vis = (latestEntries || []).filter(function(e){ return !e.deleted; });
+    if (!vis.length) { alert('There are no weighed fish to save yet.'); return; }
+    var byCat = {}, total = 0, results = {};
+    vis.forEach(function(e){ (byCat[e.category] = byCat[e.category] || []).push(e); total += Number(e.weight) || 0; });
+    CATEGORY_ORDER.forEach(function(cat){
+      var top = rankedForCategory(byCat, cat);
+      if (top.length) results[cat] = top.map(function(e, i){ return { place: i + 1, angler: String(e.angler || ''), weight: Number(e.weight) || 0, fromYouth: !!e.fromYouth }; });
+    });
+    if (!confirm('Save the current standings as the ' + year + ' results on the Past Winners list? Saving again for the same year replaces it. The live leaderboard is not changed.')) return;
+    arBtn.disabled = true; arBtn.textContent = 'Saving…';
+    db.collection('meta').doc('archive_' + year).set({ year: year, results: results, fishWeighed: vis.length, totalWeight: Math.round(total * 100) / 100, savedAt: firebase.firestore.FieldValue.serverTimestamp() }).then(function(){
+      alert(year + ' results saved. They now show under Past Winners on the site.');
+      loadPastWinners();
+    }).catch(function(err){ alert('Could not save: ' + err.message); }).then(function(){
+      arBtn.disabled = false; arBtn.textContent = "Save this year's results to Past Winners";
+    });
+  });
+
   var alertsBtn = document.getElementById('alertsToggleBtn');
   var alertsLbl = document.getElementById('alertsToggleState');
   var alertsEnabled = true;
