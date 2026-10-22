@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Awards Ceremony Display</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0B2635">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Libre+Franklin:wght@400;500;600;700;800&display=swap">
+<style>
+html,body{margin:0;height:100%;background:#0B2635;color:#EEF5F9;font-family:'Libre Franklin',system-ui,sans-serif}
+body.black{background:#000}
+body.black #stage,body.black #st{visibility:hidden}
+.rv{position:fixed;inset:0;display:flex;flex-direction:column}
+.rv-stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:3vh 4vw;text-align:center;overflow:hidden}
+.rv-in{width:100%;max-width:78rem;display:flex;flex-direction:column;align-items:center}
+.rv-logo{height:clamp(3rem,12vh,7rem);width:auto;margin-bottom:1.2vh}
+.rv-kicker{font-size:clamp(.8rem,1.7vw,1.5rem);letter-spacing:.14em;text-transform:uppercase;color:#F09A42;font-weight:700}
+.rv-h{font-family:'Bebas Neue',Impact,sans-serif;font-weight:400;font-size:clamp(2.4rem,8.5vw,7.5rem);line-height:1;margin:.1em 0 .25em;text-wrap:balance}
+.rv-sub{font-size:clamp(1rem,2.4vw,2rem);color:#9FC3D6}
+.rv-big{font-family:'Bebas Neue',Impact,sans-serif;font-size:clamp(4rem,18vw,15rem);line-height:1;color:#F09A42;font-variant-numeric:tabular-nums}
+.rv-places{list-style:none;margin:0;padding:0;display:grid;gap:clamp(.4rem,1.5vh,1.1rem);width:100%}
+.rv-places li{display:grid;grid-template-columns:clamp(3.4rem,9vw,8rem) 1fr auto;align-items:baseline;gap:clamp(.5rem,1.5vw,1.4rem);padding:clamp(.5rem,1.8vh,1.2rem) clamp(.8rem,2vw,2rem);border:2px solid #204053;border-radius:14px;background:#122E3D;text-align:left}
+.rv-places li.first{border-color:#F09A42}
+.rv-pl{font-family:'Bebas Neue',Impact,sans-serif;font-size:clamp(1.6rem,4.6vw,3.8rem);color:#F09A42;line-height:1}
+.rv-nm{font-weight:800;font-size:clamp(1.3rem,4.4vw,3.6rem);line-height:1.1;overflow-wrap:anywhere}
+.rv-places li.hid .rv-nm{color:#35586c;font-weight:700;letter-spacing:.2em}
+.rv-wt{font-variant-numeric:tabular-nums;font-size:clamp(1.1rem,3vw,2.5rem);color:#9FC3D6;white-space:nowrap}
+.rv-yt{font-style:normal;font-size:.35em;letter-spacing:.08em;text-transform:uppercase;color:#7CC4E0;border:1px solid #7CC4E0;border-radius:99px;padding:.1em .6em;margin-left:.7em;vertical-align:middle}
+.rv-names{list-style:none;margin:.6em 0 0;padding:0;width:100%;text-align:left;column-gap:3vw}
+.rv-names li{break-inside:avoid;padding:.25em 0;font-weight:700;border-bottom:1px solid #204053}
+.rv-names li em{display:block;font-style:normal;font-weight:500;color:#9FC3D6;font-size:.62em}
+.rv-names.lg{columns:1;font-size:clamp(1.4rem,4.2vw,3.4rem);text-align:center}
+.rv-names.md{columns:2;font-size:clamp(1.1rem,2.8vw,2.3rem)}
+.rv-names.sm{columns:3;font-size:clamp(.95rem,2vw,1.7rem)}
+.rv-hours{list-style:none;margin:.6em 0 0;padding:0;width:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:clamp(.5rem,1.4vw,1.1rem)}
+.rv-hours li{background:#122E3D;border:2px solid #204053;border-radius:14px;padding:.7em .9em;text-align:left;display:flex;flex-direction:column;gap:.15em}
+.rv-hours b{font-size:clamp(.8rem,1.5vw,1.2rem);letter-spacing:.1em;text-transform:uppercase;color:#F09A42}
+.rv-hours span{font-weight:800;font-size:clamp(1.2rem,3vw,2.4rem);overflow-wrap:anywhere}
+.sl-fig{margin:0;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.6vh;animation:slfade .8s ease}
+.sl-fig img{max-width:100%;max-height:72vh;object-fit:contain;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.45)}
+.sl-cap{font-family:'Bebas Neue',Impact,sans-serif;font-size:clamp(1.8rem,5.2vw,4.2rem);line-height:1.05}
+.sl-in{animation:slfade .8s ease;width:100%;display:flex;justify-content:center}
+@keyframes slfade{from{opacity:0}to{opacity:1}}
+@keyframes rvpop{0%{transform:scale(.85);opacity:0}60%{transform:scale(1.04);opacity:1}100%{transform:scale(1);opacity:1}}
+.rv-places li.pop{animation:rvpop .6s ease-out}
+@media (prefers-reduced-motion:reduce){.rv-places li.pop,.sl-fig,.sl-in{animation:none}}
+#conf{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+#st{position:fixed;right:12px;bottom:8px;font-size:.8rem;color:#35586c}
+</style>
+</head>
+<body>
+<div class="rv"><div class="rv-stage" id="stage"></div></div>
+<canvas id="conf"></canvas>
+<div id="st"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  var firebaseConfig = {
+    apiKey: "AIzaSyANrNHmYArhwnz6LcYA8A5kHBWkr2wYHLY",
+    authDomain: "hubbardston-ice-fishing-derby.firebaseapp.com",
+    projectId: "hubbardston-ice-fishing-derby",
+    storageBucket: "hubbardston-ice-fishing-derby.firebasestorage.app",
+    messagingSenderId: "127792029163",
+    appId: "1:127792029163:web:f2f466dd5b56d892914dae"
+  };
+  firebase.initializeApp(firebaseConfig);
+  var db = firebase.firestore();
+  var stage = document.getElementById('stage'), st = document.getElementById('st'), cv = document.getElementById('conf');
+  var cur = { mode: 'off', sid: 0, seq: -1, slides: [], idx: 0, step: 0, cmd: '' }, li = 0, paused = false, timer = null, wl = null;
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  var LOGO = '<img class="rv-logo" src="brand-mark.webp" alt="">';
+  var KL = { volunteer: 'Thank you, volunteers', donor: 'Thank you, donors', day: 'Derby day' };
+  function waitHtml(){ return '<div class="rv-in">' + LOGO + '<div class="rv-kicker">Awards ceremony</div><div class="rv-h">Starting soon</div></div>'; }
+  function slideHtml(s, step){
+    if (!s) return waitHtml();
+    if (s.t === 'title') return '<div class="rv-in">' + LOGO + '<div class="rv-kicker">Awards ceremony</div><div class="rv-h">Hubbardston Ice Fishing Derby</div><div class="rv-sub">Let’s meet our winners</div></div>';
+    if (s.t === 'welcome') return '<div class="sl-in"><div class="rv-in">' + LOGO + '<div class="rv-kicker">Awards ceremony</div><div class="rv-h">Thank you for being here</div><div class="rv-sub">The announcements begin soon</div></div></div>';
+    if (s.t === 'names') {
+      var size = s.names.length <= 6 ? 'lg' : (s.names.length <= 10 ? 'md' : 'sm');
+      return '<div class="sl-in"><div class="rv-in"><div class="rv-kicker">Thank you</div><div class="rv-h">' + esc(s.h) + '</div><ul class="rv-names ' + size + '">' + s.names.map(function(n){ return '<li>' + esc(n.n) + (n.o ? '<em>' + esc(n.o) + '</em>' : '') + '</li>'; }).join('') + '</ul></div></div>';
+    }
+    if (s.t === 'hours') return '<div class="rv-in"><div class="rv-kicker">Cash drawings</div><div class="rv-h">Hourly winners</div><ul class="rv-hours">' + s.items.map(function(i){ return '<li><b>' + esc(i.a) + '</b><span>' + esc(i.b) + '</span></li>'; }).join('') + '</ul></div>';
+    if (s.t === 'cat') {
+      var n = s.rows.length;
+      return '<div class="rv-in"><div class="rv-kicker">' + (s.youth ? 'Youth division · 12 &amp; under' : 'Open division') + '</div><div class="rv-h">' + esc(s.title) + '</div><ol class="rv-places">' + s.rows.map(function(r, i){
+        var shown = i >= n - step, latest = shown && i === n - step;
+        return '<li class="' + (shown ? 'on' : 'hid') + (latest ? ' pop' : '') + (i === 0 ? ' first' : '') + '"><span class="rv-pl">' + esc(r.r) + '</span><span class="rv-nm">' + (shown ? esc(r.n) + (r.y ? '<i class="rv-yt">Youth</i>' : '') : '• • •') + '</span><span class="rv-wt">' + (shown ? esc(r.w) : '') + '</span></li>';
+      }).join('') + '</ol></div>';
+    }
+    if (s.t === 'raffle') return '<div class="rv-in"><div class="rv-kicker">50/50 Raffle</div><div class="rv-h">The pot</div><div class="rv-big">$' + Number(s.pot).toLocaleString('en-US', { maximumFractionDigits: 2 }) + '</div></div>';
+    if (s.t === 'photo') return '<figure class="sl-fig"><img src="' + esc(s.u) + '" alt="" onerror="this.style.display=\'none\'"><figcaption><div class="rv-kicker">' + esc(KL[s.k] || '') + '</div>' + (s.c ? '<div class="sl-cap">' + esc(s.c) + '</div>' : '') + '</figcaption></figure>';
+    return '<div class="rv-in">' + LOGO + '<div class="rv-h">Thank you for fishing with us!</div><div class="rv-sub">Congratulations to all of our winners.</div></div>';
+  }
+  function confetti(){
+    try {
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      var ctx = cv.getContext('2d'); cv.width = cv.clientWidth; cv.height = cv.clientHeight;
+      var cols = ['#F09A42', '#EEF5F9', '#7CC4E0', '#E07A1E'], ps = [];
+      for (var i = 0; i < 140; i++) ps.push({ x: cv.width / 2 + (Math.random() - .5) * cv.width * .4, y: cv.height * .45, vx: (Math.random() - .5) * 14, vy: -Math.random() * 14 - 4, s: 5 + Math.random() * 7, c: cols[i % 4], r: Math.random() * 6 });
+      var t0 = performance.now();
+      (function f(t){
+        ctx.clearRect(0, 0, cv.width, cv.height);
+        ps.forEach(function(p){ p.vy += .35; p.x += p.vx; p.y += p.vy; p.r += .2; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * .6); ctx.restore(); });
+        if (t - t0 < 2600) requestAnimationFrame(f); else ctx.clearRect(0, 0, cv.width, cv.height);
+      })(t0);
+    } catch (e) {}
+  }
+  function preload(slides){ (slides || []).forEach(function(s){ if (s.t === 'photo' && s.u) { var i = new Image(); i.src = s.u; } }); }
+  function drawShow(){ var s = cur.slides[li]; stage.innerHTML = s ? slideHtml(s, 0) : waitHtml(); sched(); }
+  function sched(){
+    clearTimeout(timer);
+    if (paused || cur.mode !== 'slideshow' || !cur.slides.length) return;
+    var s = cur.slides[li];
+    timer = setTimeout(function(){ li = (li + 1) % cur.slides.length; drawShow(); }, s.t === 'photo' ? 7000 : (s.t === 'welcome' ? 5000 : 9000));
+  }
+  function wake(){ if (navigator.wakeLock && !wl) navigator.wakeLock.request('screen').then(function(l){ wl = l; l.addEventListener('release', function(){ wl = null; }); }).catch(function(){}); }
+  function apply(s){
+    var old = cur;
+    var nx = { mode: s.mode || 'off', sid: s.sid || 0, seq: (s.seq == null ? -1 : s.seq), slides: s.slides || [], idx: s.idx || 0, step: s.step || 0, cmd: s.cmd || '' };
+    if (nx.mode === old.mode && nx.sid === old.sid && nx.seq === old.seq && nx.idx === old.idx && nx.step === old.step) return;
+    cur = nx;
+    var fresh = nx.mode !== old.mode || nx.sid !== old.sid;
+    clearTimeout(timer);
+    document.body.classList.toggle('black', nx.mode === 'black');
+    if (nx.mode === 'reveal') {
+      var sl = nx.slides[nx.idx]; stage.innerHTML = sl ? slideHtml(sl, nx.step) : waitHtml();
+      if (!fresh && sl && sl.t === 'cat' && nx.step > 0 && nx.step === sl.rows.length && old.idx === nx.idx && old.step === nx.step - 1) confetti();
+      wake();
+    } else if (nx.mode === 'slideshow') {
+      var n = nx.slides.length || 1;
+      if (fresh) { li = 0; paused = false; preload(nx.slides); }
+      else if (nx.cmd === 'next') li = (li + 1) % n;
+      else if (nx.cmd === 'back') li = (li - 1 + n) % n;
+      else if (nx.cmd === 'goto') li = Math.min(nx.idx, n - 1);
+      else if (nx.cmd === 'pause') paused = true;
+      else if (nx.cmd === 'play') paused = false;
+      drawShow(); wake();
+    } else if (nx.mode === 'black') { stage.innerHTML = ''; }
+    else { stage.innerHTML = waitHtml(); }
+  }
+  stage.innerHTML = waitHtml();
+  db.collection('meta').doc('ceremonyShow').onSnapshot(function(d){
+    st.textContent = '';
+    apply(d.exists ? d.data() : { mode: 'off' });
+  }, function(){ st.textContent = 'Connecting…'; });
+  function fs(){ try { if (document.fullscreenElement) document.exitFullscreen(); else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen(); } catch (e) {} }
+  document.addEventListener('keydown', function(e){ if (e.key === 'f' || e.key === 'F') fs(); });
+  document.addEventListener('dblclick', fs);
+  setTimeout(function(){ if (!st.textContent) { st.textContent = 'Press F or double-click for full screen'; setTimeout(function(){ if (st.textContent.indexOf('full screen') > -1) st.textContent = ''; }, 7000); } }, 1500);
+  document.addEventListener('visibilitychange', function(){ if (!document.hidden && (cur.mode === 'reveal' || cur.mode === 'slideshow')) wake(); });
+})();
+</script>
+</body>
+</html>

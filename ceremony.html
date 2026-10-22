@@ -280,6 +280,27 @@
 @keyframes slfade{from{opacity:0}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){.sl-fig,.sl-in{animation:none}}
 </style>
+<style>/* clean view, remote control, tip card */
+.rv.rv-clean .rv-bar{position:absolute;left:0;right:0;bottom:0;z-index:5;display:none;opacity:1}
+.rv.rv-clean.rv-peek .rv-bar{display:flex}
+.rv-hint{position:absolute;left:50%;bottom:14%;transform:translateX(-50%);background:rgba(10,29,40,.94);border:1px solid #F09A42;color:#EEF5F9;padding:.7rem 1.1rem;border-radius:99px;font-weight:700;z-index:8;text-align:center;max-width:90%}
+.rc-body{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px;max-width:40rem;margin:0 auto;width:100%;box-sizing:border-box}
+.rc-top{display:flex;align-items:baseline;gap:10px}
+.rc-state{margin-left:auto;font-size:.8rem;color:#9FC3D6}
+.rc-card{background:#122E3D;border:2px solid #204053;border-radius:14px;padding:12px 14px;color:#EEF5F9}
+.rc-next{border-color:#F09A42}
+.rc-lbl{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:#9FC3D6}
+.rc-val{font-size:1.25rem;font-weight:800;margin-top:4px;overflow-wrap:anywhere}
+.rc-nav{display:grid;grid-template-columns:1fr 2fr;gap:10px}
+.rc-big{min-height:5.5rem;font-size:1.4rem}
+.rc-row{display:flex;gap:8px;flex-wrap:wrap}
+.rc-row .rv-btn{flex:1 1 7rem;padding:.6rem .5rem}
+.rc-hint{font-size:.8rem;color:#9FC3D6;line-height:1.4}
+.tip-list{margin:10px 0;padding-left:1.2em;font-size:1rem;line-height:1.45}
+.tip-opt{display:flex;gap:.6em;align-items:flex-start;font-size:.92rem;margin:8px 0}
+</style>
+<script>window.__rvZone=function(e,ov,fwd,back){if(!ov.classList.contains('rv-clean')){fwd();return;}var r=ov.getBoundingClientRect();var x=(e.clientX-r.left)/r.width;if(x<.33)back();else if(x>.67)fwd();else{ov.classList.add('rv-peek');clearTimeout(ov.__pk);ov.__pk=setTimeout(function(){ov.classList.remove('rv-peek');},4000);}};
+window.__rvHint=function(ov,msg){var h=document.createElement('div');h.className='rv-hint';h.textContent=msg;ov.appendChild(h);setTimeout(function(){if(h.parentNode)h.parentNode.removeChild(h);},4500);};</script>
 </head>
 <body>
 <div class="wrap">
@@ -313,6 +334,7 @@
   <div class="rv-bar">
     <button type="button" id="rvExit" class="rv-btn">Exit</button>
     <button type="button" id="rvFull" class="rv-btn">Full screen</button>
+    <button type="button" id="rvClean" class="rv-btn">Clean view</button>
     <select id="rvJump" aria-label="Jump to"></select>
     <span id="rvPos"></span>
     <button type="button" id="rvBack" class="rv-btn">Back</button>
@@ -324,11 +346,33 @@
   <div class="rv-bar">
     <button type="button" id="slExit" class="rv-btn">Exit</button>
     <button type="button" id="slFull" class="rv-btn">Full screen</button>
+    <button type="button" id="slClean" class="rv-btn">Clean view</button>
     <button type="button" id="slPause" class="rv-btn">Pause</button>
     <span id="slPos" style="color:#9FC3D6;font-size:.85rem;min-width:4rem;text-align:center;"></span>
     <button type="button" id="slBack" class="rv-btn">Back</button>
     <button type="button" id="slNext" class="rv-btn">Next</button>
     <button type="button" id="slReveal" class="rv-btn rv-primary">Start winner reveal</button>
+  </div>
+</div>
+<div id="rc" class="rv no-print" hidden role="dialog" aria-label="Remote control">
+  <div class="rc-body">
+    <div class="rc-top"><span class="rv-kicker">Remote control</span><span id="rcState" class="rc-state"></span></div>
+    <div class="rc-card"><div class="rc-lbl">On the TV now</div><div id="rcNow" class="rc-val"></div></div>
+    <div class="rc-card rc-next"><div class="rc-lbl">Next up (only you can see this)</div><div id="rcNext" class="rc-val"></div></div>
+    <div class="rc-nav"><button type="button" id="rcBack" class="rv-btn rc-big">Back</button><button type="button" id="rcFwd" class="rv-btn rv-primary rc-big" style="max-width:none;">Next</button></div>
+    <div class="rc-row"><button type="button" id="rcMwait" class="rv-btn">Waiting screen</button><button type="button" id="rcMshow" class="rv-btn">Photo slideshow</button><button type="button" id="rcMrev" class="rv-btn">Winner reveal</button><button type="button" id="rcMblack" class="rv-btn">Black screen</button></div>
+    <div class="rc-row"><select id="rcJump" class="rv-btn" aria-label="Jump to" style="flex:1 1 100%"></select></div>
+    <div class="rc-row"><button type="button" id="rcPause" class="rv-btn">Pause</button><button type="button" id="rcEnd" class="rv-btn">End show</button><button type="button" id="rcExit" class="rv-btn">Close remote</button></div>
+    <div class="rc-hint" id="rcHint"></div>
+  </div>
+</div>
+<div id="tipCard" class="rv no-print" hidden role="dialog" aria-label="Before you present" style="z-index:10000;background:rgba(5,15,22,.92);flex-direction:row;align-items:center;justify-content:center;padding:16px">
+  <div class="rc-card" style="max-width:26rem;width:100%;padding:18px;">
+    <div class="rv-kicker">Before you present</div>
+    <ul class="tip-list"><li>Turn the phone sideways (landscape) so it fills the TV.</li><li>Turn on Do Not Disturb so texts and alerts don't pop up on the TV.</li><li>Plug the phone in and keep this browser open.</li></ul>
+    <label class="tip-opt"><input type="checkbox" id="tipClean" checked> <span>Hide the buttons while presenting (tap right side = Next, left side = Back, middle = show buttons)</span></label>
+    <label class="tip-opt"><input type="checkbox" id="tipHide"> <span>Don't show this again on this phone</span></label>
+    <div class="rc-row" style="margin-top:12px;"><button type="button" id="tipGo" class="rv-btn rv-primary" style="max-width:none;">Start</button><button type="button" id="tipCancel" class="rv-btn">Cancel</button></div>
   </div>
 </div>
 <div id="ceremonyContent" hidden>
@@ -341,6 +385,7 @@
       </div>
       <div class="admin-row no-print">
         <button id="revealBtn" class="btn btn-primary btn-sm" type="button" title="Full-screen winner reveal for the TV or your phone">Start reveal mode</button>
+      <button id="remoteBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button" title="Run the TV from your phone (TV opens show.html)">Start remote control</button>
       <button id="printBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Print This Page</button>
         <button id="staffSignOut" class="staff-signout" type="button">Sign out</button>
       </div>
@@ -596,6 +641,191 @@
   }
   wireAdd('newVolunteerName', 'newVolunteerNote', 'addVolunteerBtn', 'volunteers');
   wireAdd('newDonorName', 'newDonorNote', 'addDonorBtn', 'donors');
+  /* ---- clean view + before-you-present tip ---- */
+  (function(){
+    function wireClean(ovId, btnId){
+      var ov = document.getElementById(ovId), b = document.getElementById(btnId); if (!ov || !b) return;
+      b.addEventListener('click', function(){
+        if (ov.classList.contains('rv-clean')) { ov.classList.remove('rv-clean', 'rv-peek'); window.__rvHint(ov, 'Buttons are back on'); }
+        else { ov.classList.add('rv-clean'); window.__rvHint(ov, 'Clean view: tap the right side for Next, left side for Back, middle for the buttons'); }
+      });
+    }
+    wireClean('rv', 'rvClean'); wireClean('sl', 'slClean');
+    var KEY = 'derbyPresentTipSeen';
+    function touchOnly(){ return !!(window.matchMedia && window.matchMedia('(hover: none)').matches); }
+    function seen(){ try { return localStorage.getItem(KEY) === '1'; } catch (e) { return false; } }
+    var card = document.getElementById('tipCard'), pending = null;
+    if (!card) return;
+    document.addEventListener('click', function(e){
+      var b = e.target && e.target.closest ? e.target.closest('#revealBtn, #slideBtn') : null;
+      if (!b) return;
+      if (b.__tipOK) { b.__tipOK = false; return; }
+      if (!touchOnly() || seen()) return;
+      e.stopPropagation(); e.preventDefault();
+      pending = b; card.hidden = false;
+    }, true);
+    document.getElementById('tipCancel').addEventListener('click', function(){ card.hidden = true; pending = null; });
+    document.getElementById('tipGo').addEventListener('click', function(){
+      var b = pending; if (!b) { card.hidden = true; return; }
+      var ov = document.getElementById(b.id === 'revealBtn' ? 'rv' : 'sl');
+      if (ov) { if (document.getElementById('tipClean').checked) ov.classList.add('rv-clean'); else ov.classList.remove('rv-clean', 'rv-peek'); }
+      if (document.getElementById('tipHide').checked) { try { localStorage.setItem(KEY, '1'); } catch (e) {} }
+      card.hidden = true; pending = null; b.__tipOK = true; b.click();
+    });
+  })();
+
+  /* ---- remote control: phone drives the TV page (show.html) through Firestore ---- */
+  (function(){
+    var rc = document.getElementById('rc'), btn = document.getElementById('remoteBtn');
+    if (!rc || !btn) return;
+    var ref = db.collection('meta').doc('ceremonyShow'), phRef = db.collection('meta').doc('ceremonyPhotos');
+    var HW = [['7am','7 AM'],['8am','8 AM'],['9am','9 AM'],['10am','10 AM'],['11am','11 AM'],['noon','Noon'],['1pm','1 PM'],['2pm','2 PM']];
+    var KL = { volunteer: 'Volunteer photo', donor: 'Donor photo', day: 'Day photo' };
+    var rev = [], shw = [], mode = 'off', sid = 0, idx = 0, step = 0, seq = 0, paused = false, wl = null, pend = 0;
+    var $ = function(id){ return document.getElementById(id); };
+    function firstText(el){ var n = el && el.childNodes[0]; return n ? n.textContent.trim() : ''; }
+    function tmo(p){ return Promise.race([p, new Promise(function(r){ setTimeout(r, 4000); })]); }
+    function chunk(a, n){ var o = []; for (var i = 0; i < a.length; i += n) o.push(a.slice(i, i + n)); return o; }
+    function readWinners(){
+      return Array.prototype.map.call(document.querySelectorAll('#winnersGroups .cat-card'), function(card){
+        var rows = Array.prototype.map.call(card.querySelectorAll('.fin-row'), function(r){
+          var nm = r.querySelector('.fin-name'), rk = r.querySelector('.fin-rank'), wt = r.querySelector('.fin-weight');
+          return { r: rk ? rk.textContent.trim() : '', n: firstText(nm), y: (nm && nm.querySelector('.youth-tag')) ? 1 : 0, w: wt ? wt.textContent.trim() : '' };
+        });
+        return { title: firstText(card.querySelector('h3')), youth: !!card.querySelector('h3 .youth-tag'), rows: rows };
+      }).filter(function(c){ return c.rows.length; });
+    }
+    function readNames(sel){
+      return Array.prototype.map.call(document.querySelectorAll(sel + ' .name-row'), function(li){
+        var a = li.querySelector('.name-main'), b = li.querySelector('.name-note');
+        return { n: a ? a.textContent.trim() : '', o: b ? b.textContent.trim() : '' };
+      }).filter(function(x){ return x.n; });
+    }
+    function buildReveal(hw, pot){
+      var s = [{ t: 'title', label: 'Welcome' }];
+      [['Volunteers', 'Thank you, volunteers', '#volunteersList'], ['Donors', 'Thank you, donors', '#donorsList']].forEach(function(g){
+        var pages = chunk(readNames(g[2]), 16);
+        pages.forEach(function(p, i){ s.push({ t: 'names', label: g[0] + (pages.length > 1 ? ' ' + (i + 1) + '/' + pages.length : ''), h: g[1], names: p }); });
+      });
+      var items = HW.filter(function(h){ return hw && hw[h[0]]; }).map(function(h){ return { a: h[1], b: hw[h[0]] }; });
+      if (items.length) s.push({ t: 'hours', label: 'Hourly drawings', items: items });
+      readWinners().forEach(function(c){ s.push({ t: 'cat', label: c.title, title: c.title, youth: c.youth, rows: c.rows }); });
+      if (pot > 0) s.push({ t: 'raffle', label: '50/50 raffle', pot: pot });
+      s.push({ t: 'end', label: 'Thank you' });
+      return s;
+    }
+    function buildShow(photos){
+      var q = { volunteer: [], donor: [], day: [] };
+      chunk(readNames('#volunteersList'), 12).forEach(function(p){ q.volunteer.push({ t: 'names', label: 'Volunteer names', h: 'Thank you, volunteers', names: p }); });
+      chunk(readNames('#donorsList'), 12).forEach(function(p){ q.donor.push({ t: 'names', label: 'Donor names', h: 'Thank you, donors', names: p }); });
+      (photos || []).slice().sort(function(a, b){ return (a.t || 0) - (b.t || 0); }).forEach(function(i){ (q[i.kind] || q.day).push({ t: 'photo', label: (KL[i.kind] || 'Photo') + (i.caption ? ': ' + i.caption : ''), k: i.kind, u: i.url, c: i.caption || '' }); });
+      var out = [{ t: 'welcome', label: 'Welcome' }], more = true, n = 0;
+      while (more) { more = false; ['volunteer', 'donor', 'day'].forEach(function(k){ if (q[k][n]) { out.push(q[k][n]); more = true; } }); n++; }
+      return out;
+    }
+    function setState(msg){ $('rcState').textContent = msg; }
+    function sent(p){
+      pend++; setState('Sending…');
+      var tm = setTimeout(function(){ setState('Waiting for signal…'); }, 4000);
+      return p.then(function(){ clearTimeout(tm); pend--; if (!pend) setState('Sent to TV'); }).catch(function(e){ clearTimeout(tm); pend--; setState('Not sent: ' + ((e && e.message) || 'error')); });
+    }
+    function publish(extra){
+      seq++;
+      var d = { mode: mode, sid: sid, idx: idx, step: step, seq: seq, cmd: '', updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+      if (extra) Object.keys(extra).forEach(function(k){ d[k] = extra[k]; });
+      return sent(ref.set(d, { merge: true }));
+    }
+    function setMode(m){
+      mode = m; sid = Date.now(); idx = 0; step = 0; paused = false;
+      publish({ slides: m === 'reveal' ? rev : (m === 'slideshow' ? shw : []) });
+      fillJump(); paint();
+    }
+    function fillJump(){
+      var list = mode === 'reveal' ? rev : (mode === 'slideshow' ? shw : []);
+      $('rcJump').innerHTML = list.length ? list.map(function(s, i){ return '<option value="' + i + '">' + escapeHtml(s.label || s.t) + '</option>'; }).join('') : '<option>(pick Winner reveal or Photo slideshow)</option>';
+      $('rcJump').disabled = !list.length;
+    }
+    function describeNext(){
+      if (mode !== 'reveal') return mode === 'slideshow' ? 'The slideshow advances by itself. Tap Next to skip ahead.' : 'Pick Photo slideshow or Winner reveal below.';
+      var s = rev[idx];
+      if (s.t === 'cat' && step < s.rows.length) { var r = s.rows[s.rows.length - step - 1]; return 'Reveal ' + r.r + ': ' + r.n + (r.y ? ' (youth)' : '') + ' — ' + r.w; }
+      var nx = rev[idx + 1];
+      if (!nx) return 'That is the end of the show.';
+      if (nx.t === 'cat') { var f = nx.rows[nx.rows.length - 1]; return 'Next category: ' + nx.title + '. First reveal will be ' + f.r + ': ' + f.n + ' — ' + f.w; }
+      return 'Next slide: ' + (nx.label || nx.t);
+    }
+    function paint(){
+      var now = '', s;
+      if (mode === 'reveal') { s = rev[idx]; now = (s.label || s.t) + (s.t === 'cat' ? ' — ' + step + ' of ' + s.rows.length + ' places shown' : ''); }
+      else if (mode === 'slideshow') now = 'Photo slideshow playing' + (paused ? ' (paused)' : '');
+      else if (mode === 'black') now = 'Black screen';
+      else now = 'Waiting screen (“Starting soon”)';
+      $('rcNow').textContent = now; $('rcNext').textContent = describeNext();
+      $('rcPause').hidden = mode !== 'slideshow'; $('rcPause').textContent = paused ? 'Play' : 'Pause';
+      [['rcMwait', 'off'], ['rcMshow', 'slideshow'], ['rcMrev', 'reveal'], ['rcMblack', 'black']].forEach(function(p){ $(p[0]).classList.toggle('rv-primary', mode === p[1]); });
+      if (mode === 'reveal') $('rcJump').value = String(idx);
+    }
+    function fwd(){
+      if (mode === 'reveal') {
+        var s = rev[idx];
+        if (s.t === 'cat' && step < s.rows.length) step++;
+        else if (idx < rev.length - 1) { idx++; step = 0; } else return;
+        publish(); paint();
+      } else if (mode === 'slideshow') { publish({ cmd: 'next' }); }
+    }
+    function bwd(){
+      if (mode === 'reveal') {
+        var s = rev[idx];
+        if (s.t === 'cat' && step > 0) step--;
+        else if (idx > 0) { idx--; var p = rev[idx]; step = p.t === 'cat' ? p.rows.length : 0; } else return;
+        publish(); paint();
+      } else if (mode === 'slideshow') { publish({ cmd: 'back' }); }
+    }
+    function wake(){ if (navigator.wakeLock && !wl) navigator.wakeLock.request('screen').then(function(l){ wl = l; l.addEventListener('release', function(){ wl = null; }); }).catch(function(){}); }
+    function openRc(){ rc.hidden = false; document.documentElement.style.overflow = 'hidden'; wake(); }
+    function closeRc(){ rc.hidden = true; document.documentElement.style.overflow = ''; if (wl) { try { wl.release(); } catch (e) {} wl = null; } }
+    $('rcFwd').addEventListener('click', fwd);
+    $('rcBack').addEventListener('click', bwd);
+    $('rcMwait').addEventListener('click', function(){ setMode('off'); });
+    $('rcMshow').addEventListener('click', function(){ setMode('slideshow'); });
+    $('rcMrev').addEventListener('click', function(){ setMode('reveal'); });
+    $('rcMblack').addEventListener('click', function(){ setMode('black'); });
+    $('rcPause').addEventListener('click', function(){ paused = !paused; publish({ cmd: paused ? 'pause' : 'play' }); paint(); });
+    $('rcJump').addEventListener('change', function(){
+      var i = parseInt($('rcJump').value, 10) || 0;
+      if (mode === 'reveal') { idx = i; step = 0; publish(); paint(); }
+      else if (mode === 'slideshow') { idx = i; publish({ cmd: 'goto' }); }
+    });
+    $('rcExit').addEventListener('click', closeRc);
+    $('rcEnd').addEventListener('click', function(){
+      if (!confirm('End the show? The TV goes back to the waiting screen.')) return;
+      mode = 'off'; sid = Date.now(); idx = 0; step = 0; publish({ slides: [] }); closeRc();
+    });
+    document.addEventListener('visibilitychange', function(){ if (!document.hidden && !rc.hidden) wake(); });
+    document.addEventListener('keydown', function(e){
+      if (rc.hidden) return;
+      var tag = e.target && e.target.tagName, form = (tag === 'BUTTON' || tag === 'SELECT');
+      if (e.key === 'ArrowRight' || e.key === 'PageDown' || ((e.key === ' ' || e.key === 'Enter') && !form)) { e.preventDefault(); fwd(); }
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); bwd(); }
+      else if (e.key === 'Escape') { closeRc(); }
+    });
+    btn.addEventListener('click', function(){
+      btn.disabled = true; btn.textContent = 'Loading…';
+      var hw = {}, pot = 0, photos = [];
+      Promise.all([
+        tmo(db.collection('meta').doc('hourlyWinners').get().then(function(d){ if (d.exists) hw = d.data(); }).catch(function(){})),
+        tmo(db.collection('meta').doc('raffle').get().then(function(d){ if (d.exists) pot = Number(d.data().total) || 0; }).catch(function(){})),
+        tmo(phRef.get().then(function(d){ if (d.exists) photos = d.data().items || []; }).catch(function(){}))
+      ]).then(function(){
+        rev = buildReveal(hw, pot); shw = buildShow(photos);
+        mode = 'off'; sid = Date.now(); idx = 0; step = 0; paused = false; seq = Date.now() % 100000;
+        publish({ slides: [] });
+        $('rcHint').innerHTML = 'On the TV, open <b>' + escapeHtml(location.host) + '/show.html</b> (laptop, cast tab or the TV’s browser) and press F or click for full screen. Both devices need internet. The winners were captured just now; if a weight changes, close the remote and start it again.';
+        fillJump(); paint(); openRc();
+      }).catch(function(){}).then(function(){ btn.disabled = false; btn.textContent = 'Start remote control'; });
+    });
+  })();
+
   /* ---- photo slideshow (waiting screen) ---- */
   (function(){
     var PH_DOC = db.collection('meta').doc('ceremonyPhotos');
@@ -739,7 +969,7 @@
     document.getElementById('slBack').addEventListener('click', function(){ go(-1); });
     document.getElementById('slNext').addEventListener('click', function(){ go(1); });
     document.getElementById('slReveal').addEventListener('click', function(){ closeSl(); var rb = document.getElementById('revealBtn'); if (rb) rb.click(); });
-    stage.addEventListener('click', function(){ go(1); });
+    stage.addEventListener('click', function(e){ window.__rvZone(e, sl, function(){ go(1); }, function(){ go(-1); }); });
     document.addEventListener('visibilitychange', function(){ if (!document.hidden && !sl.hidden) wake(); });
     document.addEventListener('keydown', function(e){
       if (sl.hidden) return;
@@ -857,7 +1087,7 @@
     document.getElementById('rvBack').addEventListener('click', back);
     document.getElementById('rvExit').addEventListener('click', closeRv);
     document.getElementById('rvFull').addEventListener('click', toggleFs);
-    stage.addEventListener('click', next);
+    stage.addEventListener('click', function(e){ window.__rvZone(e, rv, next, back); });
     jump.addEventListener('change', function(){ idx = parseInt(jump.value, 10) || 0; step = 0; render(); jump.blur(); });
     document.addEventListener('visibilitychange', function(){ if (!document.hidden && !rv.hidden) wake(); });
     document.addEventListener('keydown', function(e){
