@@ -401,6 +401,8 @@ window.__rvHint=function(ov,msg){var h=document.createElement('div');h.className
         <input type="file" id="phFiles" accept="image/*" multiple>
         <select id="phKind" aria-label="Photo type"><option value="volunteer">Volunteer</option><option value="donor">Donor</option><option value="day">Day photo</option></select>
         <input type="text" id="phCaption" maxlength="60" placeholder="Name or caption (optional)">
+        <button id="phCamBtn" class="btn btn-primary btn-sm" type="button">Take photo</button>
+        <input type="file" id="phCam" accept="image/*" capture="environment" hidden>
         <button id="phUpload" class="btn btn-primary btn-sm" type="button">Add photos</button>
       </div>
       <p id="phStatus" class="block-desc" style="margin-top:8px;"></p>
@@ -866,6 +868,17 @@ window.__rvHint=function(ov,msg){var h=document.createElement('div');h.className
       });
     }
     var upBtn = document.getElementById('phUpload'), fileEl = document.getElementById('phFiles'), kindEl = document.getElementById('phKind'), capEl = document.getElementById('phCaption');
+    /* camera: opens the phone camera; the shot uploads right away with the type and caption above */
+    var camBtn = document.getElementById('phCamBtn'), camEl = document.getElementById('phCam');
+    if (camBtn && camEl) {
+      camBtn.addEventListener('click', function(){ if (!upBtn.disabled) camEl.click(); else statusEl.textContent = 'Still uploading the last photo, one moment.'; });
+      camEl.addEventListener('change', function(){
+        if (!camEl.files || !camEl.files.length) return;
+        try { var dt = new DataTransfer(); Array.prototype.forEach.call(camEl.files, function(f){ dt.items.add(f); }); fileEl.files = dt.files; } catch (e) { statusEl.textContent = 'Could not read the photo. Use Choose files instead.'; return; }
+        camEl.value = '';
+        upBtn.click();
+      });
+    }
     upBtn.addEventListener('click', function(){
       var files = Array.prototype.slice.call(fileEl.files || []);
       if (!files.length) { statusEl.textContent = 'Choose one or more photos first.'; return; }
