@@ -1489,6 +1489,8 @@ html.screen-mode #screenHead>div{margin-right:13rem}
         <div class="admin-row" style="flex-wrap:wrap;margin:0;">
           <span style="font-size:.82rem;color:var(--text-muted);width:100%;">Results spreadsheet — downloads every active entry (time, category, angler, weight, current placing) as a CSV file that opens in Excel or Google Sheets.</span>
           <button id="csvBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Download results (CSV)</button>
+      <span style="font-size:.82rem;color:var(--text-muted);width:100%;">Full backup — saves ALL data (entries incl. removed ones, prizes, photo list, status/ice/raffle/winners, volunteers, donors) as one file. Do this after the practice run and again on derby night; keep the file somewhere safe.</span>
+      <button id="backupBtn" class="btn btn-ghost btn-sm" style="border-color:var(--border);" type="button">Download full backup (JSON)</button>
         </div>
         <div class="admin-row" style="flex-wrap:wrap;margin:0;">
               <span style="font-size:.82rem;color:var(--text-muted);width:100%;">Hourly drawing amounts ($) — leave a box blank to leave that hour as TBD:</span>
@@ -2938,6 +2940,32 @@ html.screen-mode #screenHead>div{margin-right:13rem}
     });
     return out.join('\r\n') + '\r\n';
   }
+  /* full data backup (staff only): reads every collection and saves one JSON file */
+  var backupBtn = document.getElementById('backupBtn');
+  if (backupBtn) backupBtn.addEventListener('click', function(){
+    var fs = firebase.firestore(), names = ['entries', 'prizes', 'photos', 'meta', 'volunteers', 'donors'], label = backupBtn.textContent;
+    backupBtn.disabled = true; backupBtn.textContent = 'Preparing backup\u2026';
+    function plain(v){
+      if (v && typeof v.toDate === 'function') return { __timestamp: v.toDate().toISOString() };
+      if (Array.isArray(v)) return v.map(plain);
+      if (v && typeof v === 'object') { var o = {}; Object.keys(v).forEach(function(k){ o[k] = plain(v[k]); }); return o; }
+      return v;
+    }
+    Promise.all(names.map(function(n){
+      return fs.collection(n).get().then(function(s){ var o = {}; s.forEach(function(d){ o[d.id] = plain(d.data()); }); return o; });
+    })).then(function(res){
+      var out = { app: 'Hubbardston Ice Fishing Derby', exportedAt: new Date().toISOString(), collections: {} }, counts = [];
+      names.forEach(function(n, i){ out.collections[n] = res[i]; counts.push(n + ': ' + Object.keys(res[i]).length); });
+      var blob = new Blob([JSON.stringify(out, null, 1)], { type: 'application/json' });
+      var url = URL.createObjectURL(blob), a = document.createElement('a');
+      a.href = url; a.download = 'derby-backup-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.json';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+      alert('Backup saved to your downloads.\n' + counts.join(', '));
+    }).catch(function(err){
+      alert('Backup failed: ' + ((err && err.message) || 'unknown error') + '. Make sure you are signed in as staff and online, then try again.');
+    }).then(function(){ backupBtn.disabled = false; backupBtn.textContent = label; });
+  });
   var csvBtn = document.getElementById('csvBtn');
   if (csvBtn) csvBtn.addEventListener('click', function(){
     var vis = (latestEntries || []).filter(function(e){ return !e.deleted; });
