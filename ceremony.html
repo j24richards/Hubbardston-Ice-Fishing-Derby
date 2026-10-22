@@ -301,6 +301,20 @@
 </style>
 <script>window.__rvZone=function(e,ov,fwd,back){if(!ov.classList.contains('rv-clean')){fwd();return;}var r=ov.getBoundingClientRect();var x=(e.clientX-r.left)/r.width;if(x<.33)back();else if(x>.67)fwd();else{ov.classList.add('rv-peek');clearTimeout(ov.__pk);ov.__pk=setTimeout(function(){ov.classList.remove('rv-peek');},4000);}};
 window.__rvHint=function(ov,msg){var h=document.createElement('div');h.className='rv-hint';h.textContent=msg;ov.appendChild(h);setTimeout(function(){if(h.parentNode)h.parentNode.removeChild(h);},4500);};</script>
+<style>/* photo review + caption */
+.phrev[hidden]{display:none!important}
+.phrev{position:fixed;inset:0;z-index:10001;background:#0B2635;color:#EEF5F9;display:flex;flex-direction:column;padding:10px;gap:10px;box-sizing:border-box}
+.phrev-img{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+.phrev-img img{max-width:100%;max-height:100%;object-fit:contain;border-radius:12px}
+.phrev-q{text-align:center;font-weight:800;font-size:1.15rem;letter-spacing:.02em}
+.phrev-grp{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.phrev-grp button{min-height:5.2rem;font-size:1.25rem;font-weight:800;border-radius:14px;border:3px solid #F09A42;background:#F09A42;color:#0B2635;cursor:pointer;padding:.4rem}
+.phrev-grp button:active{transform:scale(.97)}
+.phrev-sec{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.phrev-sec button{min-height:3.6rem;font-size:1.1rem;font-weight:700;border-radius:12px;border:2px solid #9FC3D6;background:transparent;color:#EEF5F9;cursor:pointer}
+.ph-cap{margin-top:4px;padding:.3rem .6rem;font-size:.85rem;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer}
+@media (max-height:480px){.phrev-grp button{min-height:3.6rem}.phrev-sec button{min-height:2.8rem}.phrev{flex-direction:row;flex-wrap:wrap}.phrev-img{flex:1 1 55%}.phrev-side{flex:1 1 38%;display:flex;flex-direction:column;gap:10px;justify-content:center}}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -373,6 +387,14 @@ window.__rvHint=function(ov,msg){var h=document.createElement('div');h.className
     <label class="tip-opt"><input type="checkbox" id="tipClean" checked> <span>Hide the buttons while presenting (tap right side = Next, left side = Back, middle = show buttons)</span></label>
     <label class="tip-opt"><input type="checkbox" id="tipHide"> <span>Don't show this again on this phone</span></label>
     <div class="rc-row" style="margin-top:12px;"><button type="button" id="tipGo" class="rv-btn rv-primary" style="max-width:none;">Start</button><button type="button" id="tipCancel" class="rv-btn">Cancel</button></div>
+  </div>
+</div>
+<div id="phRev" class="phrev no-print" hidden role="dialog" aria-label="Review photo">
+  <div class="phrev-img"><img id="phRevImg" alt="Photo just taken"></div>
+  <div class="phrev-side">
+    <div class="phrev-q">Who is this photo for?</div>
+    <div class="phrev-grp"><button type="button" data-kind="volunteer">Volunteer</button><button type="button" data-kind="donor">Donor</button><button type="button" data-kind="day">Day photo</button></div>
+    <div class="phrev-sec"><button type="button" id="phRevRetake">Retake</button><button type="button" id="phRevDiscard">Discard</button></div>
   </div>
 </div>
 <div id="ceremonyContent" hidden>
@@ -842,7 +864,7 @@ window.__rvHint=function(ov,msg){var h=document.createElement('div');h.className
     function renderGrid(){
       if (!items.length) { grid.innerHTML = '<p class="lb-empty" style="grid-column:1/-1;">No photos yet.</p>'; return; }
       grid.innerHTML = items.map(function(i){
-        return '<div class="ph-card"><img loading="lazy" src="' + escapeHtml(i.url) + '" alt=""><div class="ph-meta"><span class="ph-kind">' + escapeHtml(KIND_LABEL[i.kind] || i.kind) + '</span><span>' + escapeHtml(i.caption || '') + '</span></div><button type="button" class="ph-del" data-id="' + escapeHtml(i.id) + '" data-path="' + escapeHtml(i.path || '') + '">Remove</button></div>';
+        return '<div class="ph-card"><img loading="lazy" src="' + escapeHtml(i.url) + '" alt=""><div class="ph-meta"><span class="ph-kind">' + escapeHtml(KIND_LABEL[i.kind] || i.kind) + '</span><span>' + escapeHtml(i.caption || '') + '</span></div><button type="button" class="ph-del" data-id="' + escapeHtml(i.id) + '" data-path="' + escapeHtml(i.path || '') + '">Remove</button> <button type="button" class="ph-cap" data-id="' + escapeHtml(i.id) + '">' + (i.caption ? 'Edit caption' : 'Add caption') + '</button></div>';
       }).join('');
     }
     function setItems(arr){ items = (arr || []).slice().sort(function(a, b){ return (b.t || 0) - (a.t || 0); }); renderGrid(); }
@@ -868,17 +890,51 @@ window.__rvHint=function(ov,msg){var h=document.createElement('div');h.className
       });
     }
     var upBtn = document.getElementById('phUpload'), fileEl = document.getElementById('phFiles'), kindEl = document.getElementById('phKind'), capEl = document.getElementById('phCaption');
-    /* camera: opens the phone camera; the shot uploads right away with the type and caption above */
-    var camBtn = document.getElementById('phCamBtn'), camEl = document.getElementById('phCam');
-    if (camBtn && camEl) {
-      camBtn.addEventListener('click', function(){ if (!upBtn.disabled) camEl.click(); else statusEl.textContent = 'Still uploading the last photo, one moment.'; });
+    /* camera: shoot, review, tap a group = upload */
+    var camBtn = document.getElementById('phCamBtn'), camEl = document.getElementById('phCam'), rvEl = document.getElementById('phRev'), rvImg = document.getElementById('phRevImg');
+    var curFile = null, curUrl = null, pendingUp = 0;
+    function closeRev(){ rvEl.hidden = true; document.documentElement.style.overflow = ''; if (curUrl) { URL.revokeObjectURL(curUrl); curUrl = null; } rvImg.removeAttribute('src'); curFile = null; }
+    function uploadShot(file, kind){
+      pendingUp++; statusEl.textContent = 'Uploading ' + pendingUp + ' photo' + (pendingUp === 1 ? '' : 's') + '\u2026 you can keep shooting.';
+      return resizeImage(file).then(function(blob){
+        var id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+        var path = 'photos/ceremony/' + id + '.jpg';
+        var ref = storage.ref().child(path);
+        return ref.put(blob, { contentType: 'image/jpeg' }).then(function(){ return ref.getDownloadURL(); }).then(function(url){
+          return PH_DOC.set({ items: firebase.firestore.FieldValue.arrayUnion({ id: id, url: url, path: path, kind: kind, caption: '', t: Date.now() }) }, { merge: true });
+        });
+      }).then(function(){ pendingUp--; statusEl.textContent = pendingUp ? 'Uploading ' + pendingUp + ' photo' + (pendingUp === 1 ? '' : 's') + '\u2026' : 'Photo added (' + (KIND_LABEL[kind] || kind) + '). Tap Take photo for the next one.'; })
+        .catch(function(err){ pendingUp--; console.error('ceremony photo upload failed', err); statusEl.textContent = 'A photo did not upload: ' + ((err && err.message) || 'error') + '. Take it again.'; });
+    }
+    if (camBtn && camEl && rvEl) {
+      camBtn.addEventListener('click', function(){ camEl.click(); });
       camEl.addEventListener('change', function(){
         if (!camEl.files || !camEl.files.length) return;
-        try { var dt = new DataTransfer(); Array.prototype.forEach.call(camEl.files, function(f){ dt.items.add(f); }); fileEl.files = dt.files; } catch (e) { statusEl.textContent = 'Could not read the photo. Use Choose files instead.'; return; }
-        camEl.value = '';
-        upBtn.click();
+        curFile = camEl.files[0]; camEl.value = '';
+        if (curUrl) URL.revokeObjectURL(curUrl);
+        curUrl = URL.createObjectURL(curFile); rvImg.src = curUrl;
+        rvEl.hidden = false; document.documentElement.style.overflow = 'hidden';
       });
+      rvEl.querySelectorAll('[data-kind]').forEach(function(b){
+        b.addEventListener('click', function(){ var f = curFile, k = b.getAttribute('data-kind'); closeRev(); if (f) uploadShot(f, k); });
+      });
+      document.getElementById('phRevRetake').addEventListener('click', function(){ closeRev(); camEl.click(); });
+      document.getElementById('phRevDiscard').addEventListener('click', function(){ closeRev(); statusEl.textContent = 'Photo discarded.'; });
     }
+    /* edit a caption after the fact */
+    document.getElementById('phGrid').addEventListener('click', function(e){
+      var b = e.target.closest ? e.target.closest('.ph-cap') : null; if (!b) return;
+      var id = b.getAttribute('data-id'), cur = '';
+      for (var n = 0; n < items.length; n++) if (items[n].id === id) cur = items[n].caption || '';
+      var v = window.prompt('Name or caption for this photo (leave empty for none):', cur);
+      if (v === null) return; v = v.trim().slice(0, 60);
+      db.runTransaction(function(tx){
+        return tx.get(PH_DOC).then(function(d){
+          var arr = (d.exists && d.data().items) || [];
+          tx.set(PH_DOC, { items: arr.map(function(i){ if (i.id === id) { var c = {}; for (var k in i) c[k] = i[k]; c.caption = v; return c; } return i; }) }, { merge: true });
+        });
+      }).catch(function(err){ alert('Could not save the caption: ' + err.message); });
+    });
     upBtn.addEventListener('click', function(){
       var files = Array.prototype.slice.call(fileEl.files || []);
       if (!files.length) { statusEl.textContent = 'Choose one or more photos first.'; return; }
